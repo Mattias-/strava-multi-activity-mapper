@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Multi Activity Mapper</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="static/icon.png" />
+    <link rel="stylesheet" href="static/style.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==" crossorigin=""></script>
+  </head>
+  <body>
+    <div id='fb'>
+      <div id='menu'>
+        <a href="auth" class="menu-image connect"><img src="static/connectwith_strava.svg" alt="Connect with Strava"/></a>
+        <div id="athlete">
+          <a href="#">
+          <img alt="" class="avatar-img" src="">
+          <h2></h2>
+          </a>
+        </div>
+        <div id="settings">
+          <p>
+          <label for="text">Text</label>
+          <input id="text" name="text" type="text" />
+          </p>
+          <p>
+          <label for="from-date">From date</label>
+          <input id="from-date" name="from-date" type="date" />
+          </p>
+          <p>
+          <label for="to-date">To date</label>
+          <input id="to-date" name="to-date" type="date" />
+          </p>
+          <p>
+          <input type="button" value="Get Activities" onclick="drawActivities()"/>
+          </p>
+        </div>
+        <div id="activity-list">
+          <table>
+            <tbody></tbody>
+          </table>
+        </div>
+        <a href="https://www.strava.com" class="menu-image"><img src="static/poweredby_strava.svg" alt="Powered by Strava"/></a>
+      </div>
+      <div id='map'></div>
+    </div>
+    <script src="static/main.js"></script>
+  </body>
+</html>
