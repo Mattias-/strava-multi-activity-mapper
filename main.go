@@ -187,13 +187,13 @@ func activity(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	fs := []*geojson.Feature{}
+	fc := geojson.NewFeatureCollection()
 	for _, as := range activities {
 		if strings.Contains(as.Name, c.QueryParam("q")) {
-			fs = append(fs, activityToGeoJSON(as))
+			fc.AddFeature(activityToGeoJSON(as))
 		}
 	}
-	return c.JSON(http.StatusOK, fs)
+	return c.JSON(http.StatusOK, fc)
 }
 
 func activityToGeoJSON(as *strava.ActivitySummary) *geojson.Feature {
