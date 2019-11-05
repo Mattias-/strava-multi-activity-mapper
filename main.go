@@ -21,9 +21,8 @@ import (
 )
 
 var (
-	baseUrl   string
-	conf      *oauth2.Config
-	cookieKey []byte
+	baseUrl string
+	conf    *oauth2.Config
 )
 
 func main() {
@@ -35,8 +34,14 @@ func main() {
 	if !ok {
 		log.Fatalln("env CLIENT_SECRET not set")
 	}
-	cookieKey = []byte("asdasd")
-	baseUrl = "http://localhost:8000"
+	cookieSecret, ok := os.LookupEnv("COOKIE_SECRET")
+	if !ok {
+		log.Fatalln("env COOKIE_SECRET not set")
+	}
+	baseUrl, ok = os.LookupEnv("BASE_URL")
+	if !ok {
+		baseUrl = "http://localhost:8000"
+	}
 	conf = &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -49,7 +54,7 @@ func main() {
 	}
 
 	e := echo.New()
-	e.Use(session.Middleware(sessions.NewCookieStore(cookieKey)))
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(cookieSecret))))
 	e.Use(middleware.Logger())
 	//e.Use(middleware.Recover())
 
