@@ -177,14 +177,21 @@ func activity(c echo.Context) error {
 	client := strava.NewClient(token.AccessToken)
 	ca := strava.NewCurrentAthleteService(client)
 
-	before := time.Now()
-	after, err := time.Parse("2006-01-02", "2019-08-01")
-	if err != nil {
-		log.Println(err)
+	before, err := time.Parse("2006-01-02", c.QueryParam("before"))
+	if c.QueryParam("before") == "" || err != nil {
+		before = time.Now()
 	}
+
+	after, err := time.Parse("2006-01-02", c.QueryParam("after"))
+	if c.QueryParam("after") == "" || err != nil {
+		after = time.Now()
+		//after, err = time.Parse("2006-01-02", "2019-08-01")
+	}
+
+	// TODO: Paginate until after date.
 	activities, err := ca.ListActivities().
 		//Page(0).
-		PerPage(100).
+		PerPage(200).
 		Before(int(before.Unix())).
 		After(int(after.Unix())).
 		Do()

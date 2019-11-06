@@ -1,3 +1,4 @@
+document.getElementById('from-date').valueAsDate = new Date();
 document.getElementById('to-date').valueAsDate = new Date();
 
 var map = L.map('map').setView([59.295457899570465, 18.078887555748224], 13);
@@ -11,7 +12,10 @@ L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=p
 
 
 function drawActivities(){
-  fetch("./activity?q=%23s")
+  var text = encodeURIComponent(document.getElementById("text").value);
+  var from = document.getElementById("from-date").value;
+  var to = document.getElementById("to-date").value;
+  fetch(`./activity?q=${text}&after=${from}&before=${to}`)
   .then(function(response) {
     return response.json();
   })
