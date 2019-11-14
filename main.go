@@ -22,6 +22,7 @@ import (
 
 var (
 	baseUrl string
+	port    string
 	conf    *oauth2.Config
 )
 
@@ -38,9 +39,13 @@ func main() {
 	if !ok {
 		log.Fatalln("env COOKIE_SECRET not set")
 	}
+	port, ok = os.LookupEnv("PORT")
+	if !ok {
+		port = "8000"
+	}
 	baseUrl, ok = os.LookupEnv("BASE_URL")
 	if !ok {
-		baseUrl = "http://localhost:8000"
+		baseUrl = "http://localhost:" + port
 	}
 	conf = &oauth2.Config{
 		ClientID:     clientID,
@@ -65,7 +70,7 @@ func main() {
 	e.GET("/athlete", athlete)
 	e.GET("/callback", callback)
 
-	e.Logger.Fatal(e.Start(":8000"))
+	e.Logger.Fatal(e.Start(":" + port))
 }
 
 func auth(c echo.Context) error {
