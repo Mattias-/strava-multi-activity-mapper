@@ -181,6 +181,7 @@ func activity(c echo.Context) error {
 
 	client := strava.NewClient(token.AccessToken)
 	ca := strava.NewCurrentAthleteService(client)
+	as := strava.NewActivitiesService(client)
 
 	before, err := time.Parse("2006-01-02", c.QueryParam("before"))
 	if c.QueryParam("before") == "" || err != nil {
@@ -205,9 +206,19 @@ func activity(c echo.Context) error {
 		return err
 	}
 	fc := geojson.NewFeatureCollection()
-	for _, as := range activities {
-		if strings.Contains(as.Name, c.QueryParam("q")) {
-			fc.AddFeature(activityToGeoJSON(as))
+	for _, activity := range activities {
+		if strings.Contains(activity.Name, c.QueryParam("q")) {
+			fc.AddFeature(activityToGeoJSON(activity))
+			continue
+		}
+		activity2, err := as.Get(activity.Id).Do()
+		if err == nil {
+			if strings.Contains(activity2.Description, c.QueryParam("q")) {
+				fc.AddFeature(activityToGeoJSON(activity))
+				continue
+			}
+		} else {
+			log.Printf("Could not get activity %d: %v", activity.Id, err)
 		}
 	}
 	return c.JSON(http.StatusOK, fc)
