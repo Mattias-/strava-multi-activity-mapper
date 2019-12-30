@@ -165,12 +165,19 @@ func athlete(c echo.Context) error {
 	client := strava.NewClient(token.AccessToken)
 	service := strava.NewCurrentAthleteService(client)
 
-	// returns a AthleteDetailed object
 	athlete, err := service.Get().Do()
 	if err != nil {
 		return err
 	}
 	return c.JSON(http.StatusOK, athlete)
+}
+
+func roundUp(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 0, t.Location())
+}
+
+func roundDown(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 1, 0, t.Location())
 }
 
 func activity(c echo.Context) error {
@@ -191,12 +198,12 @@ func activity(c echo.Context) error {
 	after, err := time.Parse("2006-01-02", c.QueryParam("after"))
 	if c.QueryParam("after") == "" || err != nil {
 		after = time.Now()
-		//after, err = time.Parse("2006-01-02", "2019-08-01")
 	}
+	before = roundUp(before)
+	after = roundDown(after)
 
 	// TODO: Paginate until after date.
 	activities, err := ca.ListActivities().
-		//Page(0).
 		PerPage(200).
 		Before(int(before.Unix())).
 		After(int(after.Unix())).
