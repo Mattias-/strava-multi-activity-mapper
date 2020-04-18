@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -69,6 +70,7 @@ func main() {
 	e.GET("/activity", activity)
 	e.GET("/athlete", athlete)
 	e.GET("/callback", callback)
+	e.GET("/activitytypes", activityTypes)
 
 	e.Logger.Fatal(e.Start(":" + port))
 }
@@ -105,20 +107,6 @@ func callback(c echo.Context) error {
 		return err
 	}
 	return c.Redirect(http.StatusTemporaryRedirect, baseUrl)
-}
-
-func user(client *http.Client) {
-	res, err := client.Get("https://www.strava.com/api/v3/athlete")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(string(body))
 }
 
 func getToken(c echo.Context) (*oauth2.Token, error) {
@@ -172,6 +160,10 @@ func athlete(c echo.Context) error {
 	return c.JSON(http.StatusOK, athlete)
 }
 
+func activityTypes(c echo.Context) error {
+	return c.JSON(http.StatusOK, strava.ActivityTypes)
+}
+
 func roundUp(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 0, t.Location())
 }
@@ -180,13 +172,38 @@ func roundDown(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 1, 0, t.Location())
 }
 
+// transport is an http.RoundTripper that keeps track of the in-flight
+// request and implements hooks to report HTTP tracing events.
+type transport struct {
+	current *http.Request
+}
+
+func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	ctx := context.WithValue(req.Context(), "RequestStart", time.Now())
+	req = req.WithContext(ctx)
+
+	log.Printf("--> %s %s", req.Method, req.URL)
+
+	resp, err := http.DefaultTransport.RoundTrip(req)
+	if err != nil {
+		return resp, err
+	}
+
+	if start, ok := ctx.Value("RequestStart").(time.Time); ok {
+		log.Printf("<-- %d %s (%s)", resp.StatusCode, resp.Request.URL, time.Now().Sub(start))
+	}
+
+	return resp, err
+}
+
 func activity(c echo.Context) error {
 	token, err := getToken(c)
 	if err != nil {
 		return err
 	}
 
-	client := strava.NewClient(token.AccessToken)
+	t := &transport{}
+	client := strava.NewClient(token.AccessToken, &http.Client{Transport: t})
 	ca := strava.NewCurrentAthleteService(client)
 	as := strava.NewActivitiesService(client)
 
@@ -202,37 +219,71 @@ func activity(c echo.Context) error {
 	before = roundUp(before)
 	after = roundDown(after)
 
-	// TODO: Paginate until after date.
-	activities, err := ca.ListActivities().
-		PerPage(200).
-		Before(int(before.Unix())).
-		After(int(after.Unix())).
-		Do()
+	perPage := 200
+	activities := []*strava.ActivitySummary{}
+	for i := 1; ; i++ {
+		a, err := ca.ListActivities().
+			Page(i).
+			PerPage(perPage).
+			Before(int(before.Unix())).
+			After(int(after.Unix())).
+			Do()
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+		activities = append(activities, a...)
+		log.Printf("Got %d activities", len(a))
+		if len(a) != perPage {
+			break
+		}
+	}
 
-	if err != nil {
-		return err
-	}
 	fc := geojson.NewFeatureCollection()
+	var wg sync.WaitGroup
+	wg.Add(len(activities))
 	for _, activity := range activities {
-		if strings.Contains(activity.Name, c.QueryParam("q")) {
-			fc.AddFeature(activityToGeoJSON(activity))
-			continue
-		}
-		activity2, err := as.Get(activity.Id).Do()
-		if err == nil {
-			if strings.Contains(activity2.Description, c.QueryParam("q")) {
-				fc.AddFeature(activityToGeoJSON(activity))
-				continue
+		go func(activity *strava.ActivitySummary) {
+			defer wg.Done()
+			if c.QueryParam("type") != "" && c.QueryParam("type") != string(activity.Type) {
+				// Don't add activies that doesn't match the type filter.
+				return
 			}
-		} else {
-			log.Printf("Could not get activity %d: %v", activity.Id, err)
-		}
+			if strings.Contains(activity.Name, c.QueryParam("q")) {
+				// We found a match in the activity name
+				fc.AddFeature(activityToGeoJSON(activity))
+				return
+			}
+			activity2, err := as.Get(activity.Id).Do()
+			if err == nil {
+				if strings.Contains(activity2.Description, c.QueryParam("q")) {
+					// We found a match in the description
+					fc.AddFeature(activityToGeoJSON(&activity2.ActivitySummary))
+					return
+				}
+			} else {
+				log.Printf("Could not get activity %d: %v", activity.Id, err)
+			}
+		}(activity)
 	}
+	wg.Wait()
+	sort.Slice(fc.Features, func(i, j int) bool {
+		t1 := (*fc.Features[i]).Properties["start_date_local"].(time.Time)
+		t2 := (*fc.Features[j]).Properties["start_date_local"].(time.Time)
+		// reverse chronological order
+		return t2.Before(t1)
+	})
 	return c.JSON(http.StatusOK, fc)
 }
 
 func activityToGeoJSON(as *strava.ActivitySummary) *geojson.Feature {
-	vs := as.Map.SummaryPolyline.Decode()
+	var p strava.Polyline
+	if as.Map.Polyline != "" {
+		p = as.Map.Polyline
+	} else {
+		p = as.Map.SummaryPolyline
+	}
+	vs := p.Decode()
 	vsm := make([][]float64, len(vs))
 	for i, v := range vs {
 		vsm[i] = []float64{v[1], v[0]}

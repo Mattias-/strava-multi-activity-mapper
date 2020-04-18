@@ -21,16 +21,22 @@
         </div>
         <div id="settings">
           <p>
-          <label for="text">Text</label>
+          <label for="text">Search</label>
           <input id="text" name="text" type="text" />
           </p>
           <p>
-          <label for="from-date">From date</label>
+          <label for="from-date">Start date</label>
           <input id="from-date" name="from-date" type="date" />
           </p>
           <p>
-          <label for="to-date">To date</label>
+          <label for="to-date">End date</label>
           <input id="to-date" name="to-date" type="date" />
+          </p>
+          <p>
+          <label for="activity-type">Activity type</label>
+          <select id="activity-type">
+            <option value="">All</option>
+          </select>
           </p>
           <p>
           <input type="button" value="Get Activities" onclick="drawActivities()"/>

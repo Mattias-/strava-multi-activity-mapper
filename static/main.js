@@ -15,12 +15,18 @@ function drawActivities(){
   var text = encodeURIComponent(document.getElementById("text").value);
   var from = document.getElementById("from-date").value;
   var to = document.getElementById("to-date").value;
-  fetch(`./activity?q=${text}&after=${from}&before=${to}`)
+  var type = document.getElementById("activity-type").value;
+  fetch(`./activity?q=${text}&after=${from}&before=${to}&type=${type}`)
   .then(function(response) {
     return response.json();
   })
-  .then(function(data) {
-    var fl = L.geoJSON(data).bindPopup(function (layer) {
+  .then(addActivityData);
+}
+
+function addActivityData(data){
+    var unsorted = L.geoJSON(data);
+    console.log(unsorted._layers);
+    var fl = unsorted.bindPopup(function (layer) {
       return "<p>" + layer.feature.properties.name + "</p>";
     }).eachLayer(addToActivityList).addTo(map);
 
@@ -37,7 +43,6 @@ function drawActivities(){
 
     // once we've looped through all the features, zoom the map to the extent of the collection
     map.fitBounds(bounds);
-  });
   });
 }
 
@@ -60,9 +65,21 @@ fetch("./athlete")
   document.querySelector('#athlete a').href = "https://www.strava.com/athletes/" + data.id;
   document.querySelector('#athlete .avatar-img').src = data.profile_medium;
   document.querySelector('#athlete .avatar-img').alt = name;
+
+  // Hide connect button and show athlete, settings
   document.querySelector('.connect').style.display = "none";
   document.querySelector('#athlete').style.display = "block";
   document.querySelector('#settings').style.display = "block";
 });
 
 
+fetch("./static/activitytypes.json")
+.then(function(response) {
+  return response.json();
+})
+.then(function(data) {
+  var typeSelect = document.querySelector('#activity-type');
+  for (let [key, value] of Object.entries(data)) {
+    typeSelect.insertAdjacentHTML('beforeend', `<option value="${key}">${value}</option>`);
+  }
+});

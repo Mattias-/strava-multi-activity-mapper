@@ -15,7 +15,7 @@ html, body {
   text-align:center;
 }
 
-#settings input {
+#settings input, #settings select {
   width: 10em;
 }
 
