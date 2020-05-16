@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -267,12 +266,6 @@ func activity(c echo.Context) error {
 		}(activity)
 	}
 	wg.Wait()
-	sort.Slice(fc.Features, func(i, j int) bool {
-		t1 := (*fc.Features[i]).Properties["start_date_local"].(time.Time)
-		t2 := (*fc.Features[j]).Properties["start_date_local"].(time.Time)
-		// reverse chronological order
-		return t2.Before(t1)
-	})
 	return c.JSON(http.StatusOK, fc)
 }
 
