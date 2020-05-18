@@ -27,7 +27,7 @@ var app = new Vue({
     methods: {
         getActivities: function(data) {
             var text = encodeURIComponent(data.queryString);
-            fetch(`./activity?q=${text}&after=${data.fromDate}&before=${data.toDate}&type=${data.selectedType}`)
+            fetch(`./activities?q=${text}&after=${data.fromDate}&before=${data.toDate}&type=${data.selectedType}`)
                 .then(stream => stream.json())
                 .then(addActivityData);
         }
