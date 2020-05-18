@@ -1,11 +1,45 @@
-var map = L.map('map').setView([59.295457899570465, 18.078887555748224], 13);
-L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-    maxZoom: 18,
-    id: 'mapbox/light-v10',
-    accessToken: 'pk.eyJ1IjoibWF0dGk0cyIsImEiOiJja2E0Nmc3ZXgwYjE3M2ZtdmtpemR5ZHNvIn0.Zd4e3EFiWxz8tFV9MYREbg'
-}).addTo(map);
+var defaultLocation = [59.32, 18.07];
+var map = L.map('map', {
+    center: defaultLocation,
+    zoom: 13
+});
 
+navigator.geolocation.getCurrentPosition(function(location) {
+  var latlng = new L.LatLng(location.coords.latitude, location.coords.longitude);
+  map.flyTo(latlng);
+});
+
+var urlParams = new URLSearchParams(window.location.search);
+var mapProvider = urlParams.get("provider") || "mapbox";
+var mapStyle = urlParams.get("style") || "mapbox/light-v10";
+
+if (mapProvider == "stamen") {
+    L.tileLayer("https://stamen-tiles-{s}.a.ssl.fastly.net/{id}/{z}/{x}/{y}.{type}", {
+        type: "png", // Watercolor use jpg but png redirects to that.
+        id: mapStyle,
+        subdomains: ["a", "b", "c", "d"],
+        maxZoom: 18,
+        attribution: [
+            'Map tiles by <a href="https://stamen.com/">Stamen Design</a>, ',
+            'under <a href="https://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. ',
+            'Data by <a href="https://openstreetmap.org">OpenStreetMap</a>, ',
+            'under <a href="https://www.openstreetmap.org/copyright">ODbL</a>.'
+        ].join("")
+    }).addTo(map);
+} else {
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        attribution: [
+            '<a href="https://www.mapbox.com/about/maps/" target="_blank">&copy; Mapbox</a>, ',
+            '<a href="http://www.openstreetmap.org/about/" target="_blank">&copy; OpenStreetMap</a> contributors, ',
+            '<a href="https://www.mapbox.com/map-feedback/#/-74.5/40/10" target="_blank">Improve this map</a></div>'
+        ].join(""),
+        maxZoom: 18,
+        tileSize: 512,
+        zoomOffset: -1,
+        id: mapStyle,
+        accessToken: 'pk.eyJ1IjoibWF0dGk0cyIsImEiOiJja2E0Nmc3ZXgwYjE3M2ZtdmtpemR5ZHNvIn0.Zd4e3EFiWxz8tFV9MYREbg'
+    }).addTo(map);
+}
 
 import Athlete from "./Athlete.js";
 import QueryForm from "./QueryForm.js";
@@ -64,7 +98,7 @@ function centerMap() {
             bounds.extend(layerBounds);
         }
     });
-    map.fitBounds(bounds);
+    map.flyToBounds(bounds);
 }
 
 function addToActivityList(layer) {
