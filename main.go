@@ -65,7 +65,7 @@ func main() {
 	e.Use(middleware.Logger())
 	//e.Use(middleware.Recover())
 
-	e.File("/", "index.html")
+	e.File("/", "static/index.html")
 	e.Static("/static", "static")
 	e.GET("/auth", auth)
 	e.GET("/callback", callback)
@@ -332,7 +332,6 @@ func activitiesStream(c echo.Context) error {
 		c.Response().Flush()
 	}
 	return nil
-	//return c.JSON(http.StatusOK, fc)
 }
 
 func activityToGeoJSON(as *strava.ActivitySummary) *geojson.Feature {
