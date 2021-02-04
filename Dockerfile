@@ -1,4 +1,4 @@
-FROM golang:1.14.2
+FROM golang:1.15.7
 COPY . /src
 WORKDIR /src
 RUN CGO_ENABLED=0 go build -o mam
