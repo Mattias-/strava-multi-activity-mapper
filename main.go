@@ -204,7 +204,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	if start, ok := ctx.Value("RequestStart").(time.Time); ok {
-		log.Printf("%s %d %s (%s)", req.Method, resp.StatusCode, resp.Request.URL, time.Now().Sub(start))
+		log.Printf("%s %d %s (%s)", req.Method, resp.StatusCode, resp.Request.URL, time.Since(start))
 	}
 
 	return resp, err
@@ -243,7 +243,6 @@ func getActivities(ca *strava.CurrentAthleteService, beforeS string, afterS stri
 		}
 	}
 	close(outChan)
-	return
 }
 
 func activityFeature(query string, activityType string, as *strava.ActivitiesService, activity *strava.ActivitySummary, featureChan chan *geojson.Feature) {
@@ -265,7 +264,6 @@ func activityFeature(query string, activityType string, as *strava.ActivitiesSer
 			log.Printf("Could not get activity %d: %v", activity.Id, err)
 		}
 	}
-	return
 }
 
 func athleteFeatures(ca *strava.CurrentAthleteService, as *strava.ActivitiesService, before, after, q, at string) chan *geojson.Feature {
