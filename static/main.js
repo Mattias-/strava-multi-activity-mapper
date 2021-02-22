@@ -55,7 +55,7 @@ import Athlete from "./Athlete.js";
 import QueryForm from "./QueryForm.js";
 import ActivityList from "./ActivityList.js";
 
-var app = new Vue({
+const MultiActivityMapper = {
   el: "#menu",
   data: {
     authed: false,
@@ -78,26 +78,29 @@ var app = new Vue({
         .then(addActivityData);
     },
   },
-});
+};
+
+var vm = new Vue(MultiActivityMapper);
 
 fetch("./static/activitytypes.json")
   .then((stream) => stream.json())
-  .then((data) => (app.activityTypes = data));
+  .then((data) => (vm.activityTypes = data));
 
 fetch(`./athlete`)
   .then((stream) => stream.json())
   .then(function (data) {
     var name = data.firstname + " " + data.lastname;
-    app.athlete.name = name;
-    app.athlete.url = "https://www.strava.com/athletes/" + data.id;
-    app.athlete.image = data.profile_medium;
-    app.authed = true;
+    vm.athlete.name = name;
+    vm.athlete.url = "https://www.strava.com/athletes/" + data.id;
+    vm.athlete.image = data.profile_medium;
+    vm.authed = true;
   });
 
 function addActivityData(data) {
   L.geoJSON(data)
     .bindPopup(function (layer) {
-      return "<p>" + layer.feature.properties.name + "</p>";
+      var props = layer.feature.properties;
+      return `<a href="https://strava.com/activities/${props.activity.id}">${props.name}</a> ${props.activity.start_date_local}`;
     })
     .eachLayer(addToActivityList)
     .addTo(map);
@@ -119,6 +122,8 @@ function addToActivityList(layer) {
   if (layer.hasOwnProperty("feature")) {
     var a = layer.feature.properties.activity;
     a.url = "https://strava.com/activities/" + a.id;
-    app.activities.push(a);
+    if (!vm.activities.find((b) => b.id == a.id)) {
+      vm.activities.push(a);
+    }
   }
 }
