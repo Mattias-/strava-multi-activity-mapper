@@ -1,14 +1,14 @@
 export default {
-    props: ["activityTypes"],
-    data: function() {
-        return {
-            queryString: "",
-            fromDate: new Date().toISOString().slice(0, 10),
-            toDate: new Date().toISOString().slice(0, 10),
-            selectedType: "",
-        }
-    },
-    template: `
+  props: ["activityTypes"],
+  data: function () {
+    return {
+      queryString: "",
+      fromDate: new Date().toISOString().slice(0, 10),
+      toDate: new Date().toISOString().slice(0, 10),
+      selectedType: "",
+    };
+  },
+  template: `
         <div id="settings">
           <p>
           <label for="text">Search</label>
@@ -33,5 +33,5 @@ export default {
           <input type="button" value="Get Activities" v-on:click="$emit('submit', $data)"/>
           </p>
         </div>
-`
-}
+`,
+};
