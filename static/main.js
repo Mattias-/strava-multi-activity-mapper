@@ -57,11 +57,13 @@ import ActivityList from "./ActivityList.js";
 
 const MultiActivityMapper = {
   el: "#menu",
-  data: {
-    authed: false,
-    activityTypes: {},
-    athlete: {},
-    activities: [],
+  data() {
+    return {
+      authed: false,
+      activityTypes: {},
+      athlete: {},
+      activities: [],
+    };
   },
   components: {
     Athlete,
@@ -80,7 +82,7 @@ const MultiActivityMapper = {
   },
 };
 
-var vm = new Vue(MultiActivityMapper);
+var vm = Vue.createApp(MultiActivityMapper).mount("#menu");
 
 fetch("./static/activitytypes.json")
   .then((stream) => stream.json())
@@ -110,7 +112,7 @@ function addActivityData(data) {
 function centerMap() {
   var bounds = L.latLngBounds([]);
   map.eachLayer(function (layer) {
-    if (layer.hasOwnProperty("feature")) {
+    if (Object.prototype.hasOwnProperty.call(layer, "feature")) {
       var layerBounds = layer.getBounds();
       bounds.extend(layerBounds);
     }
@@ -119,7 +121,7 @@ function centerMap() {
 }
 
 function addToActivityList(layer) {
-  if (layer.hasOwnProperty("feature")) {
+  if (Object.prototype.hasOwnProperty.call(layer, "feature")) {
     var a = layer.feature.properties.activity;
     a.url = "https://strava.com/activities/" + a.id;
     if (!vm.activities.find((b) => b.id == a.id)) {

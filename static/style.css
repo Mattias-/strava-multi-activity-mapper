@@ -1,7 +1,8 @@
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
-  font-family: 'Fira Sans', sans-serif;
+  font-family: "Fira Sans", sans-serif;
   font-size: 12px;
   font-weight: 600;
 }
@@ -32,11 +33,13 @@ a {
   text-align: center;
 }
 
-#settings input, #settings select {
+#settings input,
+#settings select {
   width: 10em;
 }
 
-input[type=date]::-webkit-inner-spin-button, input[type=date]::-webkit-clear-button {
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
   -webkit-appearance: none;
   display: none;
 }
@@ -65,7 +68,7 @@ a.menu-image img {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow:auto;
+  overflow: auto;
   justify-content: space-between;
   align-items: center;
 }
@@ -81,11 +84,11 @@ a.menu-image img {
 }
 
 @media screen and (max-width: 700px) {
-    #fb {
-      flex-direction: column;
-    }
-    #menu {
-      height: 50%;
-      width: 100%;
-    }
+  #fb {
+    flex-direction: column;
+  }
+  #menu {
+    height: 50%;
+    width: 100%;
+  }
 }
