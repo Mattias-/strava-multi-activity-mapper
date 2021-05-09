@@ -24,7 +24,7 @@
     <script src="https://unpkg.com/vue@next"></script>
   </head>
   <body>
-    <div id="fb">
+    <div id="app">
       <div id="menu">
         <template v-if="authed">
           <athlete v-bind:athlete="athlete"></athlete>
@@ -43,7 +43,7 @@
           ><img src="static/poweredby_strava.svg" alt="Powered by Strava"
         /></a>
       </div>
-      <div id="map"></div>
+      <Lmap ref="map"></Lmap>
     </div>
     <script type="module" src="static/main.js"></script>
   </body>
