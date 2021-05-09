@@ -12,7 +12,6 @@ export default {
           var props = layer.feature.properties;
           return `<a href="https://strava.com/activities/${props.activity.id}">${props.name}</a> ${props.activity.start_date_local}`;
         })
-        .eachLayer(this.$parent.addToActivityList)
         .addTo(this.mapObject);
       this.centerMap();
     },

@@ -6,7 +6,6 @@ import Lmap from "./Lmap.js";
 const MultiActivityMapper = {
   data() {
     return {
-      authed: false,
       activityTypes: {},
       athlete: {},
       activities: [],
@@ -18,14 +17,22 @@ const MultiActivityMapper = {
     QueryForm,
     ActivityList,
   },
+  computed: {
+    authed() {
+      return this.athlete != null;
+    },
+  },
   methods: {
     getActivities: function (data) {
+      var $c = this;
       var text = encodeURIComponent(data.queryString);
-      fetch(
+      var p = fetch(
         `./activities?q=${text}&after=${data.fromDate}&before=${data.toDate}&type=${data.selectedType}`
-      )
-        .then((stream) => stream.json())
-        .then(this.$refs.map.addActivityData);
+      ).then((stream) => stream.json());
+      p.then(this.$refs.map.addActivityData);
+      p.then(function (data) {
+        L.geoJSON(data).eachLayer($c.addToActivityList);
+      });
     },
 
     addToActivityList: function (layer) {
@@ -39,16 +46,10 @@ const MultiActivityMapper = {
     },
   },
   mounted() {
-    var v = this;
     fetch(`./athlete`)
       .then((stream) => stream.json())
-      .then(function (data) {
-        var name = data.firstname + " " + data.lastname;
-        v.athlete.name = name;
-        v.athlete.url = "https://www.strava.com/athletes/" + data.id;
-        v.athlete.image = data.profile_medium;
-        v.authed = true;
-      });
+      .then((data) => (this.athlete = data))
+      .catch(() => (this.athlete = null));
     fetch("./static/activitytypes.json")
       .then((stream) => stream.json())
       .then((data) => (this.activityTypes = data));
