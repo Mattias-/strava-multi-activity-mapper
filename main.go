@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/paulmach/go.geojson"
-	"github.com/strava/go.strava"
+	geojson "github.com/paulmach/go.geojson"
+	strava "github.com/strava/go.strava"
 	"golang.org/x/oauth2"
 
 	"github.com/gorilla/sessions"
@@ -23,6 +23,8 @@ import (
 )
 
 var (
+	commit  = "none"
+	date    = "unknown"
 	baseUrl string
 	port    string
 	conf    *oauth2.Config
@@ -67,6 +69,7 @@ func main() {
 
 	e.File("/", "static/index.html")
 	e.Static("/static", "static")
+	e.GET("/version", version)
 	e.GET("/auth", auth)
 	e.GET("/callback", callback)
 	e.GET("/athlete", athlete)
@@ -75,6 +78,18 @@ func main() {
 	e.GET("/activitytypes", activityTypes)
 
 	e.Logger.Fatal(e.Start(":" + port))
+}
+
+func version(c echo.Context) error {
+	r := struct {
+		Commit string `json:"commit"`
+		Date   string `json:"date"`
+	}{
+		Commit: commit,
+		Date:   date,
+	}
+	log.Printf("%v", r)
+	return c.JSON(http.StatusOK, r)
 }
 
 func auth(c echo.Context) error {
