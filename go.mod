@@ -1,4 +1,4 @@
-module main
+module github.com/Mattias-/strava-multi-activity-mapper
 
 go 1.16
 

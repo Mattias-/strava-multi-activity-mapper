@@ -2,18 +2,18 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Mattias-/strava-multi-activity-mapper/pkg/strava"
+
 	"github.com/google/uuid"
 	geojson "github.com/paulmach/go.geojson"
-	strava "github.com/strava/go.strava"
+	stravaapi "github.com/strava/go.strava"
 	"golang.org/x/oauth2"
 
 	"github.com/gorilla/sessions"
@@ -74,7 +74,6 @@ func main() {
 	e.GET("/callback", callback)
 	e.GET("/athlete", athlete)
 	e.GET("/activities", activities)
-	e.GET("/activities/stream", activitiesStream)
 	e.GET("/activitytypes", activityTypes)
 
 	e.Logger.Fatal(e.Start(":" + port))
@@ -161,28 +160,14 @@ func getToken(c echo.Context) (*oauth2.Token, error) {
 	return newToken, nil
 }
 
-func getClient(token *oauth2.Token) *strava.Client {
-	t := &transport{
-		tp: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ResponseHeaderTimeout: 10 * time.Second,
-			//ExpectContinueTimeout: 1 * time.Second,
-		}}
-	return strava.NewClient(token.AccessToken, &http.Client{Transport: t})
-}
-
 func athlete(c echo.Context) error {
 	token, err := getToken(c)
 	if err != nil {
 		return err
 	}
 
-	client := getClient(token)
-	service := strava.NewCurrentAthleteService(client)
+	client := strava.GetClient(token)
+	service := stravaapi.NewCurrentAthleteService(client)
 
 	athlete, err := service.Get().Do()
 	if err != nil {
@@ -192,7 +177,7 @@ func athlete(c echo.Context) error {
 }
 
 func activityTypes(c echo.Context) error {
-	return c.JSON(http.StatusOK, strava.ActivityTypes)
+	return c.JSON(http.StatusOK, stravaapi.ActivityTypes)
 }
 
 func roundUp(t time.Time) time.Time {
@@ -203,29 +188,7 @@ func roundDown(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 1, 0, t.Location())
 }
 
-// transport is an http.RoundTripper that keeps track of the in-flight
-// request and implements hooks to report HTTP tracing events.
-type transport struct {
-	tp      *http.Transport
-	current *http.Request
-}
-
-func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	ctx := context.WithValue(req.Context(), "RequestStart", time.Now())
-	req = req.WithContext(ctx)
-	resp, err := t.tp.RoundTrip(req)
-	if err != nil {
-		return resp, err
-	}
-
-	if start, ok := ctx.Value("RequestStart").(time.Time); ok {
-		log.Printf("%s %d %s (%s)", req.Method, resp.StatusCode, resp.Request.URL, time.Since(start))
-	}
-
-	return resp, err
-}
-
-func getActivities(ca *strava.CurrentAthleteService, beforeS string, afterS string, outChan chan *strava.ActivitySummary) {
+func getActivities(ca *stravaapi.CurrentAthleteService, beforeS string, afterS string, outChan chan *stravaapi.ActivitySummary) {
 	before, err := time.Parse("2006-01-02", beforeS)
 	if beforeS == "" || err != nil {
 		before = time.Now()
@@ -260,7 +223,7 @@ func getActivities(ca *strava.CurrentAthleteService, beforeS string, afterS stri
 	close(outChan)
 }
 
-func activityFeature(query string, activityType string, as *strava.ActivitiesService, activity *strava.ActivitySummary, featureChan chan *geojson.Feature) {
+func activityFeature(query string, activityType string, as *stravaapi.ActivitiesService, activity *stravaapi.ActivitySummary, featureChan chan *geojson.Feature) {
 	if activityType != "" && activityType != string(activity.Type) {
 		// Don't add activies that doesn't match the type filter.
 		return
@@ -281,15 +244,15 @@ func activityFeature(query string, activityType string, as *strava.ActivitiesSer
 	}
 }
 
-func athleteFeatures(ca *strava.CurrentAthleteService, as *strava.ActivitiesService, before, after, q, at string) chan *geojson.Feature {
-	activityChan := make(chan *strava.ActivitySummary)
+func athleteFeatures(ca *stravaapi.CurrentAthleteService, as *stravaapi.ActivitiesService, before, after, q, at string) chan *geojson.Feature {
+	activityChan := make(chan *stravaapi.ActivitySummary)
 	go getActivities(ca, before, after, activityChan)
 
 	var wg sync.WaitGroup
 	featureChan := make(chan *geojson.Feature)
 	for activity := range activityChan {
 		wg.Add(1)
-		go func(activity *strava.ActivitySummary) {
+		go func(activity *stravaapi.ActivitySummary) {
 			activityFeature(q, at, as, activity, featureChan)
 			wg.Done()
 		}(activity)
@@ -308,9 +271,9 @@ func activities(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	client := getClient(token)
-	ca := strava.NewCurrentAthleteService(client)
-	as := strava.NewActivitiesService(client)
+	client := strava.GetClient(token)
+	ca := stravaapi.NewCurrentAthleteService(client)
+	as := stravaapi.NewActivitiesService(client)
 
 	featureChan := athleteFeatures(ca, as, c.QueryParam("before"), c.QueryParam("after"), c.QueryParam("q"), c.QueryParam("type"))
 	fc := geojson.NewFeatureCollection()
@@ -321,34 +284,8 @@ func activities(c echo.Context) error {
 	return c.JSON(http.StatusOK, fc)
 }
 
-func activitiesStream(c echo.Context) error {
-	token, err := getToken(c)
-	if err != nil {
-		return err
-	}
-	client := getClient(token)
-	ca := strava.NewCurrentAthleteService(client)
-	as := strava.NewActivitiesService(client)
-
-	featureChan := athleteFeatures(ca, as, c.QueryParam("before"), c.QueryParam("after"), c.QueryParam("q"), c.QueryParam("type"))
-	fc := geojson.NewFeatureCollection()
-
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	c.Response().WriteHeader(http.StatusOK)
-
-	enc := json.NewEncoder(c.Response())
-	for a := range featureChan {
-		fc.AddFeature(a)
-		if err := enc.Encode(a); err != nil {
-			return err
-		}
-		c.Response().Flush()
-	}
-	return nil
-}
-
-func activityToGeoJSON(as *strava.ActivitySummary) *geojson.Feature {
-	var p strava.Polyline
+func activityToGeoJSON(as *stravaapi.ActivitySummary) *geojson.Feature {
+	var p stravaapi.Polyline
 	if as.Map.Polyline != "" {
 		p = as.Map.Polyline
 	} else {
