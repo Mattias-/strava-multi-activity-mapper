@@ -72,8 +72,8 @@ func main() {
 	e.GET("/version", version)
 	e.GET("/auth", auth)
 	e.GET("/callback", callback)
-	e.GET("/athlete", athlete)
-	e.GET("/activities", activities)
+	e.GET("/athlete", athlete, withToken)
+	e.GET("/activities", activities, withToken)
 	e.GET("/activitytypes", activityTypes)
 
 	e.Logger.Fatal(e.Start(":" + port))
@@ -160,12 +160,22 @@ func getToken(c echo.Context) (*oauth2.Token, error) {
 	return newToken, nil
 }
 
-func athlete(c echo.Context) error {
-	token, err := getToken(c)
-	if err != nil {
-		return err
+func withToken(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		token, err := getToken(c)
+		if err != nil {
+			return err
+		}
+		c.Set("token", token)
+		if err := next(c); err != nil {
+			c.Error(err)
+		}
+		return nil
 	}
+}
 
+func athlete(c echo.Context) error {
+	token := c.Get("token").(*oauth2.Token)
 	client := strava.GetClient(token)
 	service := stravaapi.NewCurrentAthleteService(client)
 
@@ -267,10 +277,7 @@ func athleteFeatures(ca *stravaapi.CurrentAthleteService, as *stravaapi.Activiti
 }
 
 func activities(c echo.Context) error {
-	token, err := getToken(c)
-	if err != nil {
-		return err
-	}
+	token := c.Get("token").(*oauth2.Token)
 	client := strava.GetClient(token)
 	ca := stravaapi.NewCurrentAthleteService(client)
 	as := stravaapi.NewActivitiesService(client)
