@@ -9,17 +9,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Mattias-/strava-multi-activity-mapper/pkg/strava"
+	apiclient "github.com/Mattias-/strava-go/client"
+	activitiesapi "github.com/Mattias-/strava-go/client/activities"
+	stravamodels "github.com/Mattias-/strava-go/models"
 
+	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
-	geojson "github.com/paulmach/go.geojson"
-	stravaapi "github.com/strava/go.strava"
-	"golang.org/x/oauth2"
-
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	geojson "github.com/paulmach/go.geojson"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -87,7 +89,6 @@ func version(c echo.Context) error {
 		Commit: commit,
 		Date:   date,
 	}
-	log.Printf("%v", r)
 	return c.JSON(http.StatusOK, r)
 }
 
@@ -176,18 +177,19 @@ func withToken(next echo.HandlerFunc) echo.HandlerFunc {
 
 func athlete(c echo.Context) error {
 	token := c.Get("token").(*oauth2.Token)
-	client := strava.GetClient(token)
-	service := stravaapi.NewCurrentAthleteService(client)
+	r := httptransport.New(apiclient.DefaultHost, apiclient.DefaultBasePath, apiclient.DefaultSchemes)
+	r.DefaultAuthentication = httptransport.BearerToken(token.AccessToken)
+	client := apiclient.New(r, strfmt.Default)
 
-	athlete, err := service.Get().Do()
+	athlete, err := client.Athletes.GetLoggedInAthlete(nil, nil)
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, athlete)
+	return c.JSON(http.StatusOK, athlete.Payload)
 }
 
 func activityTypes(c echo.Context) error {
-	return c.JSON(http.StatusOK, stravaapi.ActivityTypes)
+	return c.JSON(http.StatusOK, nil)
 }
 
 func roundUp(t time.Time) time.Time {
@@ -198,7 +200,11 @@ func roundDown(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 1, 0, t.Location())
 }
 
-func getActivities(ca *stravaapi.CurrentAthleteService, beforeS string, afterS string, outChan chan *stravaapi.ActivitySummary) {
+func ptrint64(p int64) *int64 {
+	return &p
+}
+
+func getActivities(client *apiclient.StravaAPIV3, beforeS string, afterS string, outChan chan *stravamodels.SummaryActivity) {
 	before, err := time.Parse("2006-01-02", beforeS)
 	if beforeS == "" || err != nil {
 		before = time.Now()
@@ -212,16 +218,17 @@ func getActivities(ca *stravaapi.CurrentAthleteService, beforeS string, afterS s
 	after = roundDown(after)
 
 	perPage := 200
+	params := activitiesapi.NewGetLoggedInAthleteActivitiesParams().
+		WithPerPage(ptrint64(int64(perPage))).
+		WithBefore(ptrint64(before.Unix())).
+		WithAfter(ptrint64(after.Unix()))
+
 	for i := 1; ; i++ {
-		a, err := ca.ListActivities().
-			Page(i).
-			PerPage(perPage).
-			Before(int(before.Unix())).
-			After(int(after.Unix())).
-			Do()
+		ac, err := client.Activities.GetLoggedInAthleteActivities(params.WithPage(ptrint64(int64(i))), nil)
 		if err != nil {
 			log.Println(err)
 		}
+		a := ac.Payload
 		log.Printf("Got %d activities", len(a))
 		for _, activity := range a {
 			outChan <- activity
@@ -233,7 +240,7 @@ func getActivities(ca *stravaapi.CurrentAthleteService, beforeS string, afterS s
 	close(outChan)
 }
 
-func activityFeature(query string, activityType string, as *stravaapi.ActivitiesService, activity *stravaapi.ActivitySummary, featureChan chan *geojson.Feature) {
+func activityFeature(client *apiclient.StravaAPIV3, query string, activityType string, activity *stravamodels.SummaryActivity, featureChan chan *geojson.Feature) {
 	if activityType != "" && activityType != string(activity.Type) {
 		// Don't add activies that doesn't match the type filter.
 		return
@@ -242,28 +249,29 @@ func activityFeature(query string, activityType string, as *stravaapi.Activities
 		// We found a match in the activity name
 		featureChan <- activityToGeoJSON(activity)
 	} else {
-		activity2, err := as.Get(activity.Id).Do()
+		params := activitiesapi.NewGetActivityByIDParams()
+		activity2, err := client.Activities.GetActivityByID(params.WithID(int64(activity.ID)), nil)
 		if err == nil {
-			if strings.Contains(activity2.Description, query) {
+			if strings.Contains(activity2.Payload.Description, query) {
 				// We found a match in the description
-				featureChan <- activityToGeoJSON(&activity2.ActivitySummary)
+				featureChan <- activityToGeoJSON(&activity2.Payload.SummaryActivity)
 			}
 		} else {
-			log.Printf("Could not get activity %d: %v", activity.Id, err)
+			log.Printf("Could not get activity %d: %v", activity.ID, err)
 		}
 	}
 }
 
-func athleteFeatures(ca *stravaapi.CurrentAthleteService, as *stravaapi.ActivitiesService, before, after, q, at string) chan *geojson.Feature {
-	activityChan := make(chan *stravaapi.ActivitySummary)
-	go getActivities(ca, before, after, activityChan)
+func athleteFeatures(client *apiclient.StravaAPIV3, before, after, q, at string) chan *geojson.Feature {
+	activityChan := make(chan *stravamodels.SummaryActivity)
+	go getActivities(client, before, after, activityChan)
 
 	var wg sync.WaitGroup
 	featureChan := make(chan *geojson.Feature)
 	for activity := range activityChan {
 		wg.Add(1)
-		go func(activity *stravaapi.ActivitySummary) {
-			activityFeature(q, at, as, activity, featureChan)
+		go func(activity *stravamodels.SummaryActivity) {
+			activityFeature(client, q, at, activity, featureChan)
 			wg.Done()
 		}(activity)
 	}
@@ -278,11 +286,16 @@ func athleteFeatures(ca *stravaapi.CurrentAthleteService, as *stravaapi.Activiti
 
 func activities(c echo.Context) error {
 	token := c.Get("token").(*oauth2.Token)
-	client := strava.GetClient(token)
-	ca := stravaapi.NewCurrentAthleteService(client)
-	as := stravaapi.NewActivitiesService(client)
+	r := httptransport.New(apiclient.DefaultHost, apiclient.DefaultBasePath, apiclient.DefaultSchemes)
+	r.DefaultAuthentication = httptransport.BearerToken(token.AccessToken)
+	client := apiclient.New(r, strfmt.Default)
 
-	featureChan := athleteFeatures(ca, as, c.QueryParam("before"), c.QueryParam("after"), c.QueryParam("q"), c.QueryParam("type"))
+	featureChan := athleteFeatures(client,
+		c.QueryParam("before"),
+		c.QueryParam("after"),
+		c.QueryParam("q"),
+		c.QueryParam("type"),
+	)
 	fc := geojson.NewFeatureCollection()
 	for a := range featureChan {
 		fc.AddFeature(a)
@@ -291,23 +304,62 @@ func activities(c echo.Context) error {
 	return c.JSON(http.StatusOK, fc)
 }
 
-func activityToGeoJSON(as *stravaapi.ActivitySummary) *geojson.Feature {
-	var p stravaapi.Polyline
+func activityToGeoJSON(as *stravamodels.SummaryActivity) *geojson.Feature {
+	var p string
 	if as.Map.Polyline != "" {
 		p = as.Map.Polyline
 	} else {
 		p = as.Map.SummaryPolyline
 	}
-	vs := p.Decode()
-	vsm := make([][]float64, len(vs))
-	for i, v := range vs {
-		vsm[i] = []float64{v[1], v[0]}
-	}
+	vsm := decodePoly(p)
 	f := geojson.NewLineStringFeature(vsm)
 	f.Properties["name"] = as.Name
 	f.Properties["type"] = as.Type
-	f.Properties["id"] = as.Id
+	f.Properties["id"] = as.ID
 	f.Properties["start_date_local"] = as.StartDateLocal
 	f.Properties["activity"] = as
 	return f
+}
+
+func decodePoly(p string) [][]float64 {
+	var count, index int
+	factor := 1.0e5
+
+	line := make([][]float64, 0)
+	tempLatLng := [2]int{0, 0}
+
+	for index < len(p) {
+		var result int
+		var b int = 0x20
+		var shift uint
+
+		for b >= 0x20 {
+			b = int(p[index]) - 63
+			index++
+
+			result |= (b & 0x1f) << shift
+			shift += 5
+		}
+
+		// sign dection
+		if result&1 != 0 {
+			result = ^(result >> 1)
+		} else {
+			result = result >> 1
+		}
+
+		if count%2 == 0 {
+			result += tempLatLng[0]
+			tempLatLng[0] = result
+		} else {
+			result += tempLatLng[1]
+			tempLatLng[1] = result
+
+			line = append(line, []float64{float64(tempLatLng[1]) / factor, float64(tempLatLng[0]) / factor})
+		}
+
+		count++
+	}
+
+	return line
 }
