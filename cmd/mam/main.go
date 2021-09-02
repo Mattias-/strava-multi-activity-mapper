@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -22,6 +21,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	geojson "github.com/paulmach/go.geojson"
 	"golang.org/x/oauth2"
+
+	"github.com/Mattias-/strava-multi-activity-mapper/pkg/queryparser"
 )
 
 var (
@@ -245,14 +246,14 @@ func activityFeature(client *apiclient.StravaAPIV3, query string, activityType s
 		// Don't add activies that doesn't match the type filter.
 		return
 	}
-	if strings.Contains(activity.Name, query) {
+	if queryparser.Matches(activity.Name, query) {
 		// We found a match in the activity name
 		featureChan <- activityToGeoJSON(activity)
 	} else {
 		params := activitiesapi.NewGetActivityByIDParams()
 		activity2, err := client.Activities.GetActivityByID(params.WithID(int64(activity.ID)), nil)
 		if err == nil {
-			if strings.Contains(activity2.Payload.Description, query) {
+			if queryparser.Matches(activity2.Payload.Description, query) {
 				// We found a match in the description
 				featureChan <- activityToGeoJSON(&activity2.Payload.SummaryActivity)
 			}
