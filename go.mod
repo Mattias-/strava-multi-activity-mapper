@@ -11,7 +11,6 @@ require (
 	github.com/labstack/echo-contrib v0.11.0
 	github.com/labstack/echo/v4 v4.5.0
 	github.com/paulmach/go.geojson v1.4.0
-	github.com/strava/go.strava v0.0.0-20180612235916-99ebe972ba16
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 )
