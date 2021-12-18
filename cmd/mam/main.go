@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -184,6 +185,7 @@ func athlete(c echo.Context) error {
 
 	athlete, err := client.Athletes.GetLoggedInAthlete(nil, nil)
 	if err != nil {
+		fmt.Printf("%w", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, athlete.Payload)
