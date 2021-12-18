@@ -1,9 +1,12 @@
-import Athlete from "./Athlete.js";
-import QueryForm from "./QueryForm.js";
-import ActivityList from "./ActivityList.js";
-import Lmap from "./Lmap.js";
+import Athlete from "./components/Athlete.js";
+import QueryForm from "./components/QueryForm.js";
+import ActivityList from "./components/ActivityList.js";
+import Lmap from "./components/Lmap.js";
 
-const MultiActivityMapper = {
+import * as L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+export default {
   data() {
     return {
       activityTypes: {},
@@ -50,10 +53,29 @@ const MultiActivityMapper = {
       .then((stream) => stream.json())
       .then((data) => (this.athlete = data))
       .catch(() => (this.athlete = null));
-    fetch("./static/activitytypes.json")
+    fetch("/activitytypes.json")
       .then((stream) => stream.json())
       .then((data) => (this.activityTypes = data));
   },
+  template: `
+      <div id="menu">
+        <template v-if="authed">
+          <athlete v-bind:athlete="athlete"></athlete>
+          <query-form
+            v-bind:activity-types="activityTypes"
+            v-on:submit="getActivities"
+          ></query-form>
+          <activity-list v-bind:activities="activities"></activity-list>
+        </template>
+        <template v-else>
+          <a href="auth" class="menu-image"
+            ><img src="/connectwith_strava.svg" alt="Connect with Strava"
+          /></a>
+        </template>
+        <a href="https://www.strava.com" class="menu-image"
+          ><img src="/poweredby_strava.svg" alt="Powered by Strava"
+        /></a>
+      </div>
+      <Lmap ref="map"></Lmap>
+`,
 };
-
-Vue.createApp(MultiActivityMapper).mount("#app");

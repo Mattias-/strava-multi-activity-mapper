@@ -69,10 +69,8 @@ func main() {
 	e := echo.New()
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(cookieSecret))))
 	e.Use(middleware.Logger())
-	//e.Use(middleware.Recover())
 
-	e.File("/", "static/index.html")
-	e.Static("/static", "static")
+	e.Static("/", "dist")
 	e.GET("/version", version)
 	e.GET("/auth", auth)
 	e.GET("/callback", callback)

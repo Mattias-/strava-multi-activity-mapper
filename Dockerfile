@@ -1,4 +1,9 @@
-FROM golang:1.17
+FROM node:16 AS frontend
+COPY . /src
+WORKDIR /src
+RUN yarn && yarn build
+
+FROM golang:1.17 AS backend
 COPY . /src
 WORKDIR /src
 
@@ -8,7 +13,7 @@ RUN echo "date="$(git show -s --format="%cI")"">>envfile
 RUN . ./envfile; CGO_ENABLED=0 go build -ldflags "-s -w -X main.commit=$commit -X main.date=$date" ./cmd/mam/
 
 FROM scratch
-COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=0 /src/mam /mam
-COPY ./static /static
+COPY --from=backend /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=backend /src/mam /mam
+COPY --from=frontend /src/dist /dist
 CMD ["/mam"]
