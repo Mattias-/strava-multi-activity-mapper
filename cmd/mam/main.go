@@ -69,6 +69,7 @@ func main() {
 	e := echo.New()
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(cookieSecret))))
 	e.Use(middleware.Logger())
+	e.Use(middleware.Gzip())
 
 	e.Static("/", "dist")
 	e.GET("/version", version)

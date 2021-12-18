@@ -65,9 +65,9 @@ export default {
         "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}",
         {
           attribution: [
-            '<a href="https://www.mapbox.com/about/maps/" target="_blank">&copy; Mapbox</a>, ',
-            '<a href="http://www.openstreetmap.org/about/" target="_blank">&copy; OpenStreetMap</a> contributors, ',
-            '<a href="https://www.mapbox.com/map-feedback/#/-74.5/40/10" target="_blank">Improve this map</a></div>',
+            '<a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noreferrer">&copy; Mapbox</a>, ',
+            '<a href="http://www.openstreetmap.org/about/" target="_blank" rel="noreferrer">&copy; OpenStreetMap</a> contributors, ',
+            '<a href="https://www.mapbox.com/map-feedback/#/-74.5/40/10" target="_blank" rel="noreferrer">Improve this map</a></div>',
           ].join(""),
           maxZoom: 18,
           tileSize: 512,
