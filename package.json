@@ -7,7 +7,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "dexie": "^3.2.0",
     "leaflet": "^1.7.1",
+    "localforage": "^1.10.0",
     "vue": "^3.2.25"
   },
   "devDependencies": {

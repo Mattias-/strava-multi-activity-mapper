@@ -31,6 +31,7 @@ export default {
           </p>
           <p>
           <input type="button" value="Get Activities" v-on:click="$emit('submit', $data)"/>
+          <input type="button" value="Clear Activities" v-on:click="$emit('clear')"/>
           </p>
         </div>
 `,

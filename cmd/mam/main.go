@@ -242,38 +242,31 @@ func getActivities(client *apiclient.StravaAPIV3, beforeS string, afterS string,
 	close(outChan)
 }
 
-func activityFeature(client *apiclient.StravaAPIV3, query string, activityType string, activity *stravamodels.SummaryActivity, featureChan chan *geojson.Feature) {
+func detailedActivity(client *apiclient.StravaAPIV3, query string, activityType string, activity *stravamodels.SummaryActivity, activityChan chan *stravamodels.DetailedActivity) {
 	if activityType != "" && activityType != string(activity.Type) {
 		// Don't add activies that doesn't match the type filter.
 		return
 	}
-	if queryparser.Matches(activity.Name, query) {
-		// We found a match in the activity name
-		featureChan <- activityToGeoJSON(activity)
-	} else {
-		params := activitiesapi.NewGetActivityByIDParams()
-		activity2, err := client.Activities.GetActivityByID(params.WithID(int64(activity.ID)), nil)
-		if err == nil {
-			if queryparser.Matches(activity2.Payload.Description, query) {
-				// We found a match in the description
-				featureChan <- activityToGeoJSON(&activity2.Payload.SummaryActivity)
-			}
-		} else {
-			log.Printf("Could not get activity %d: %v", activity.ID, err)
-		}
+	params := activitiesapi.NewGetActivityByIDParams()
+	activity2, err := client.Activities.GetActivityByID(params.WithID(int64(activity.ID)), nil)
+	if err != nil {
+		log.Printf("Could not get activity %d: %v", activity.ID, err)
+	}
+	if queryparser.Matches(activity.Name, query) || queryparser.Matches(activity2.Payload.Description, query) {
+		activityChan <- activity2.Payload
 	}
 }
 
-func athleteFeatures(client *apiclient.StravaAPIV3, before, after, q, at string) chan *geojson.Feature {
+func athleteActivities(client *apiclient.StravaAPIV3, before, after, q, at string) chan *stravamodels.DetailedActivity {
 	activityChan := make(chan *stravamodels.SummaryActivity)
 	go getActivities(client, before, after, activityChan)
 
 	var wg sync.WaitGroup
-	featureChan := make(chan *geojson.Feature)
+	c := make(chan *stravamodels.DetailedActivity)
 	for activity := range activityChan {
 		wg.Add(1)
 		go func(activity *stravamodels.SummaryActivity) {
-			activityFeature(client, q, at, activity, featureChan)
+			detailedActivity(client, q, at, activity, c)
 			wg.Done()
 		}(activity)
 	}
@@ -281,9 +274,9 @@ func athleteFeatures(client *apiclient.StravaAPIV3, before, after, q, at string)
 		// Wait for all features to be created.
 		wg.Wait()
 		// At that point we can close the channel.
-		close(featureChan)
+		close(c)
 	}()
-	return featureChan
+	return c
 }
 
 func activities(c echo.Context) error {
@@ -292,34 +285,36 @@ func activities(c echo.Context) error {
 	r.DefaultAuthentication = httptransport.BearerToken(token.AccessToken)
 	client := apiclient.New(r, strfmt.Default)
 
-	featureChan := athleteFeatures(client,
+	activityChan := athleteActivities(client,
 		c.QueryParam("before"),
 		c.QueryParam("after"),
 		c.QueryParam("q"),
 		c.QueryParam("type"),
 	)
 	fc := geojson.NewFeatureCollection()
-	for a := range featureChan {
-		fc.AddFeature(a)
+	for a := range activityChan {
+		f := activityToGeoJSON(a)
+		fc.AddFeature(f)
 	}
 
 	return c.JSON(http.StatusOK, fc)
 }
 
-func activityToGeoJSON(as *stravamodels.SummaryActivity) *geojson.Feature {
+func activityToGeoJSON(activity *stravamodels.DetailedActivity) *geojson.Feature {
 	var p string
-	if as.Map.Polyline != "" {
-		p = as.Map.Polyline
+	if activity.Map.Polyline != "" {
+		p = activity.Map.Polyline
 	} else {
-		p = as.Map.SummaryPolyline
+		p = activity.Map.SummaryPolyline
 	}
 	vsm := decodePoly(p)
 	f := geojson.NewLineStringFeature(vsm)
-	f.Properties["name"] = as.Name
-	f.Properties["type"] = as.Type
-	f.Properties["id"] = as.ID
-	f.Properties["start_date_local"] = as.StartDateLocal
-	f.Properties["activity"] = as
+	f.Properties["name"] = activity.Name
+	f.Properties["description"] = activity.Description
+	f.Properties["type"] = activity.Type
+	f.Properties["id"] = activity.ID
+	f.Properties["start_date_local"] = activity.StartDateLocal
+	f.Properties["activity"] = activity
 	return f
 }
 
