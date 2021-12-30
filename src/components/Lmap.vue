@@ -1,11 +1,14 @@
+<style src="leaflet/dist/leaflet.css"></style>
+
+<script>
 import * as L from 'leaflet';
+
 export default {
   data() {
     return {
       mapObject: {},
     };
   },
-  template: `<div id="map"></div>`,
   methods: {
     addActivityData: function (data) {
       L.geoJSON(data)
@@ -14,7 +17,6 @@ export default {
           return `<a href="https://strava.com/activities/${props.activity.id}">${props.name}</a> ${props.activity.start_date_local}`;
         })
         .addTo(this.mapObject);
-      this.centerMap();
     },
     centerMap: function () {
       var bounds = L.latLngBounds([]);
@@ -80,3 +82,8 @@ export default {
     }
   },
 };
+</script>
+
+<template>
+  <div id="map"></div>
+</template>

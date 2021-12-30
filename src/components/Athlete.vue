@@ -1,3 +1,4 @@
+<script>
 export default {
   props: ["athlete"],
   computed: {
@@ -11,12 +12,13 @@ export default {
       return this.athlete.profile_medium;
     },
   },
-  template: `
-        <div id="athlete">
-          <a :href="stravaUrl">
-          <img :alt="fullName" class="avatar-img" :src="profileImageUrl">
-          <h2>{{ fullName }}</h2>
-          </a>
-        </div>
-`,
 };
+</script>
+<template>
+  <div id="athlete">
+    <a :href="stravaUrl">
+    <img :alt="fullName" class="avatar-img" :src="profileImageUrl">
+    <h2>{{ fullName }}</h2>
+    </a>
+  </div>
+</template>
