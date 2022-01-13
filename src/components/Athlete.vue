@@ -14,6 +14,7 @@ export default {
   },
 };
 </script>
+
 <template>
   <div id="athlete">
     <a :href="stravaUrl">
@@ -22,3 +23,23 @@ export default {
     </a>
   </div>
 </template>
+
+<style>
+#athlete {
+  text-align: center;
+}
+
+#athlete a {
+  text-decoration: none;
+  color: #000;
+}
+
+#athlete h2 {
+  font-size: 22px;
+}
+
+#athlete img.avatar-img {
+  border-radius: 50%;
+  vertical-align: middle;
+}
+</style>

@@ -18,11 +18,17 @@ export default {
     <table>
       <tbody>
         <tr v-for="a in sortedActivities">
-          <td><a :href="a.url">{{ a.name }}</a></td>
-          <td>{{ new Date(a.start_date_local).toISOString().slice(0, 10) }}</td>
           <td>{{ a.type }}</td>
+          <td>{{ new Date(a.start_date_local).toISOString().slice(0, 10) }}</td>
+          <td><a :href="a.url">{{ a.name }}</a></td>
         </tr>
       </tbody>
     </table>
   </div>
 </template>
+
+<style>
+#activity-list {
+  flex-grow: 1;
+}
+</style>

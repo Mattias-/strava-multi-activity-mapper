@@ -120,3 +120,26 @@ export default {
   </div>
   <Lmap ref="map"></Lmap>
 </template>
+
+<style>
+#menu {
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media screen and (max-width: 700px) {
+  #menu {
+    height: 50%;
+    width: 100%;
+  }
+}
+
+a.menu-image img {
+  width: 200px;
+}
+</style>

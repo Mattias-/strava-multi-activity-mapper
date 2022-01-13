@@ -87,3 +87,10 @@ export default {
 <template>
   <div id="map"></div>
 </template>
+
+<style>
+#map {
+  width: 100%;
+  height: 100%;
+}
+</style>

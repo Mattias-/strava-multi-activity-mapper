@@ -11,69 +11,6 @@ a {
   color: #fc4c02;
 }
 
-#athlete {
-  text-align: center;
-}
-
-#athlete a {
-  text-decoration: none;
-  color: #000;
-}
-
-#athlete h2 {
-  font-size: 22px;
-}
-
-#athlete img.avatar-img {
-  border-radius: 50%;
-  vertical-align: middle;
-}
-
-#settings {
-  text-align: center;
-}
-
-#settings input,
-#settings select {
-  width: 10em;
-}
-
-input[type="date"]::-webkit-inner-spin-button,
-input[type="date"]::-webkit-clear-button {
-  -webkit-appearance: none;
-  display: none;
-}
-
-#settings label {
-  display: inline-block;
-  width: 6em;
-  text-align: right;
-  margin-right: 1em;
-}
-
-a.menu-image img {
-  width: 200px;
-}
-
-#activity-list {
-  flex-grow: 1;
-}
-
-#map {
-  width: 100%;
-  height: 100%;
-}
-
-#menu {
-  width: 400px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: auto;
-  justify-content: space-between;
-  align-items: center;
-}
-
 #app {
   width: 100%;
   height: 100%;
@@ -87,9 +24,5 @@ a.menu-image img {
 @media screen and (max-width: 700px) {
   #app {
     flex-direction: column;
-  }
-  #menu {
-    height: 50%;
-    width: 100%;
   }
 }

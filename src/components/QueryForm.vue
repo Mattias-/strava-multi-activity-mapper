@@ -51,3 +51,27 @@ export default {
     </p>
   </div>
 </template>
+
+<style>
+#settings {
+  text-align: center;
+}
+
+#settings input,
+#settings select {
+  width: 13em;
+}
+
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+  -webkit-appearance: none;
+  display: none;
+}
+
+#settings label {
+  display: inline-block;
+  width: 6em;
+  text-align: right;
+  margin-right: 1em;
+}
+</style>
