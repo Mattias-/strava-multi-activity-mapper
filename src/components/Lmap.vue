@@ -1,7 +1,7 @@
 <style src="leaflet/dist/leaflet.css"></style>
 
 <script>
-import * as L from 'leaflet';
+import * as L from "leaflet";
 
 export default {
   data() {
