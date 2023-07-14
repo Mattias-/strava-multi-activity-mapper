@@ -128,7 +128,10 @@ func callback(c echo.Context) error {
 }
 
 func getToken(c echo.Context) (*oauth2.Token, error) {
-	sess, _ := session.Get("session", c)
+	sess, err := session.Get("session", c)
+	if err != nil {
+		return nil, c.JSON(http.StatusUnauthorized, nil)
+	}
 	accessToken, ok := sess.Values["oauth-accesstoken"].(string)
 	if !ok {
 		return nil, c.JSON(http.StatusBadRequest, "Missing oauth token")
@@ -177,14 +180,20 @@ func withToken(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func athlete(c echo.Context) error {
-	token := c.Get("token").(*oauth2.Token)
+	token, ok := c.Get("token").(*oauth2.Token)
+	if !ok || token == nil {
+		return c.JSON(http.StatusUnauthorized, struct{ status int }{
+			status: http.StatusUnauthorized,
+		})
+	}
+	fmt.Printf("Token :%v", token)
 	r := httptransport.New(apiclient.DefaultHost, apiclient.DefaultBasePath, apiclient.DefaultSchemes)
 	r.DefaultAuthentication = httptransport.BearerToken(token.AccessToken)
 	client := apiclient.New(r, strfmt.Default)
 
 	athlete, err := client.Athletes.GetLoggedInAthlete(nil, nil)
 	if err != nil {
-		fmt.Printf("%w", err)
+		fmt.Printf("%v", err)
 		return err
 	}
 	return c.JSON(http.StatusOK, athlete.Payload)
