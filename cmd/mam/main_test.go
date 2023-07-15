@@ -1,4 +1,4 @@
-package queryparser
+package main
 
 import (
 	"testing"

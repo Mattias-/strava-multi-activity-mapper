@@ -2,17 +2,16 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	apiclient "github.com/Mattias-/strava-go/client"
 	activitiesapi "github.com/Mattias-/strava-go/client/activities"
 	stravamodels "github.com/Mattias-/strava-go/models"
-
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
@@ -21,9 +20,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	geojson "github.com/paulmach/go.geojson"
+	"golang.org/x/exp/slog"
 	"golang.org/x/oauth2"
-
-	"github.com/Mattias-/strava-multi-activity-mapper/pkg/queryparser"
 )
 
 var (
@@ -37,16 +35,20 @@ var (
 func main() {
 	clientID, ok := os.LookupEnv("CLIENT_ID")
 	if !ok {
-		log.Fatalln("env CLIENT_ID not set")
+		slog.Error("env CLIENT_ID not set")
+		os.Exit(1)
 	}
 	clientSecret, ok := os.LookupEnv("CLIENT_SECRET")
 	if !ok {
-		log.Fatalln("env CLIENT_SECRET not set")
+		slog.Error("env CLIENT_SECRET not set")
+		os.Exit(1)
 	}
 	cookieSecret, ok := os.LookupEnv("COOKIE_SECRET")
 	if !ok {
-		log.Fatalln("env COOKIE_SECRET not set")
+		slog.Error("env COOKIE_SECRET not set")
+		os.Exit(1)
 	}
+	cookieDomain := os.Getenv("COOKIE_DOMAIN")
 	port, ok = os.LookupEnv("PORT")
 	if !ok {
 		port = "8000"
@@ -67,9 +69,19 @@ func main() {
 	}
 
 	e := echo.New()
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte(cookieSecret))))
+	cs := sessions.NewCookieStore([]byte(cookieSecret))
+	if cookieDomain != "" {
+		cs.Options.Domain = cookieDomain
+		cs.Options.SameSite = http.SameSiteNoneMode
+		cs.Options.Secure = true
+	}
+	e.Use(session.Middleware(cs))
 	e.Use(middleware.Logger())
 	e.Use(middleware.Gzip())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{baseUrl, "http://localhost:8000"},
+		AllowCredentials: true,
+	}))
 
 	e.Static("/", "dist")
 	e.GET("/version", version)
@@ -144,7 +156,7 @@ func getToken(c echo.Context) (*oauth2.Token, error) {
 	if !ok {
 		return nil, c.JSON(http.StatusBadRequest, "Missing oauth token")
 	}
-	c.Logger().Debug(sess.Values)
+	slog.Debug("Got token from session", "token", sess.Values)
 
 	token := &oauth2.Token{
 		AccessToken:  accessToken,
@@ -186,14 +198,13 @@ func athlete(c echo.Context) error {
 			status: http.StatusUnauthorized,
 		})
 	}
-	fmt.Printf("Token :%v", token)
 	r := httptransport.New(apiclient.DefaultHost, apiclient.DefaultBasePath, apiclient.DefaultSchemes)
 	r.DefaultAuthentication = httptransport.BearerToken(token.AccessToken)
 	client := apiclient.New(r, strfmt.Default)
 
 	athlete, err := client.Athletes.GetLoggedInAthlete(nil, nil)
 	if err != nil {
-		fmt.Printf("%v", err)
+		slog.Error("Could not get athlete", "error", err.Error())
 		return err
 	}
 	return c.JSON(http.StatusOK, athlete.Payload)
@@ -237,10 +248,9 @@ func getActivities(client *apiclient.StravaAPIV3, beforeS string, afterS string,
 	for i := 1; ; i++ {
 		ac, err := client.Activities.GetLoggedInAthleteActivities(params.WithPage(ptrint64(int64(i))), nil)
 		if err != nil {
-			log.Println(err)
+			slog.Error("athlete activites", "error", err.Error())
 		}
 		a := ac.Payload
-		log.Printf("Got %d activities", len(a))
 		for _, activity := range a {
 			outChan <- activity
 		}
@@ -253,16 +263,24 @@ func getActivities(client *apiclient.StravaAPIV3, beforeS string, afterS string,
 
 func detailedActivity(client *apiclient.StravaAPIV3, query string, activityType string, activity *stravamodels.SummaryActivity, activityChan chan *stravamodels.DetailedActivity) {
 	if activityType != "" && activityType != string(activity.Type) {
+
+		slog.Info("Non matching activity", "filter_activity_type", activityType, "acitivity_type", activity.Type)
 		// Don't add activies that doesn't match the type filter.
 		return
 	}
 	params := activitiesapi.NewGetActivityByIDParams()
 	activity2, err := client.Activities.GetActivityByID(params.WithID(int64(activity.ID)), nil)
 	if err != nil {
-		log.Printf("Could not get activity %d: %v", activity.ID, err)
+		slog.Error("Could not get detailed activity", "id", activity.ID, "error", err.Error())
 	}
-	if queryparser.Matches(activity.Name, query) || queryparser.Matches(activity2.Payload.Description, query) {
+	if query == "" || Matches(activity.Name, query) || Matches(activity2.Payload.Description, query) {
 		activityChan <- activity2.Payload
+	} else {
+		slog.Info("Activity did not match query",
+			"query", query,
+			"activity_name", activity.Name,
+			"activity_description", activity2.Payload.Description,
+		)
 	}
 }
 
@@ -368,4 +386,24 @@ func decodePoly(p string) [][]float64 {
 	}
 
 	return line
+}
+
+func Matches(data, query string) bool {
+	dataWords := strings.Split(data, " ")
+	queryWords := strings.Split(query, " ")
+	sort.Strings(dataWords)
+	for _, qw := range queryWords {
+		if qw == "" {
+			continue
+		}
+		if contains(dataWords, qw) {
+			return true
+		}
+	}
+	return false
+}
+
+func contains(s []string, searchterm string) bool {
+	i := sort.SearchStrings(s, searchterm)
+	return i < len(s) && s[i] == searchterm
 }
