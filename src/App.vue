@@ -47,27 +47,39 @@ export default {
       if (!data.onlyCached) {
         var text = encodeURIComponent(data.queryString);
         var p = fetch(
-          `./activities?q=${text}&after=${data.fromDate}&before=${data.toDate}&type=${data.selectedType}`
+          `./activities?q=${text}&after=${data.fromDate}&before=${data.toDate}&type=${data.selectedType}`,
         ).then((stream) => stream.json());
 
         p.then(function (data) {
           data.features.forEach(function (feature) {
             var a = feature.properties.activity;
+            var text = [];
+            if (a.name) {
+              text = text.concat(a.name.split(" "));
+            }
+            if (a.description) {
+              text = text.concat(a.description.split(" "));
+            }
             db.activities.put({
               id: String(a.id),
               type: a.type,
               start_date: new Date(a.start_date),
-              text: a.name.split(" ").concat(a.description.split(" ")),
+              text: text,
               feature: feature,
             });
           });
         });
       }
 
-      db.activities
-        .where("text")
-        .anyOfIgnoreCase(data.queryString.split(" "))
-        .distinct()
+      var activities = db.activities.toCollection();
+      if (data.queryString) {
+        activities = db.activities
+          .where("text")
+          .anyOfIgnoreCase(data.queryString.split(" "))
+          .distinct();
+      }
+
+      activities
         .and((value) => {
           var lower = new Date(data.fromDate);
           lower.setHours(0, 0, 0);
