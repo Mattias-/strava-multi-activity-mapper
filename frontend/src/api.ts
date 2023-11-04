@@ -49,7 +49,7 @@ export type ATs = {
 };
 
 export async function getActivityTypes(): Promise<ATs> {
-  const response = await fetch(`${apiBaseUrl}/activitytypes.json`);
+  const response = await fetch(`${apiBaseUrl}/activitytypes`);
   if (response.status === 200) {
     return await response.json();
   } else {

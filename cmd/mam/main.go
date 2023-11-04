@@ -222,7 +222,42 @@ func athlete(c echo.Context) error {
 }
 
 func activityTypes(c echo.Context) error {
-	return c.JSON(http.StatusOK, nil)
+	ats := []byte(`{
+  "Ride": "Ride",
+  "Run": "Run",
+  "Swim": "Swim",
+  "Hike": "Hike",
+  "Walk": "Walk",
+  "AlpineSki": "Alpine Ski",
+  "BackcountrySki": "Backcountry Ski",
+  "Canoeing": "Canoeing",
+  "Crossfit": "Crossfit",
+  "EBikeRide": "E-Bike Ride",
+  "Elliptical": "Elliptical",
+  "Handcycle": "Handcycle",
+  "IceSkate": "Ice Skate",
+  "InlineSkate": "Inline Skate",
+  "Kayaking": "Kayaking",
+  "Kitesurf": "Kitesurf",
+  "NordicSki": "Nordic Ski",
+  "RockClimbing": "Rock Climbing",
+  "RollerSki": "Roller Ski",
+  "Rowing": "Rowing",
+  "Snowboard": "Snowboard",
+  "Snowshoe": "Snowshoe",
+  "StairStepper": "Stair-Stepper",
+  "StandUpPaddling": "Stand Up Paddling",
+  "Surfing": "Surfing",
+  "Velomobile": "Velomobile",
+  "VirtualRide": "Virtual Ride",
+  "VirtualRun": "Virtual Run",
+  "WeightTraining": "Weight Training",
+  "Wheelchair": "Wheelchair",
+  "Windsurf": "Windsurf",
+  "Workout": "Workout",
+  "Yoga": "Yoga"
+}`)
+	return c.JSONBlob(http.StatusOK, ats)
 }
 
 func roundUp(t time.Time) time.Time {
