@@ -1,0 +1,29 @@
+{
+  "name": "my-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 8000",
+    "build": "tsc && vite build",
+    "build-dev": "tsc && vite build --mode development",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@preact/signals": "^1.1.5",
+    "dexie": "^3.2.4",
+    "dexie-react-hooks": "^1.1.6",
+    "leaflet": "^1.9.4",
+    "preact": "^10.15.1",
+    "react-leaflet": "^4.2.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.5.0",
+    "@types/leaflet": "^1.9.3",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.26",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.0"
+  }
+}

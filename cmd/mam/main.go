@@ -86,7 +86,7 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	e.Static("/", "dist")
+	e.Static("/", "frontend/dist")
 	e.GET("/version", version)
 	e.GET("/auth", auth)
 	e.GET("/callback", callback)
