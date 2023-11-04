@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"sort"
@@ -33,6 +34,8 @@ var (
 )
 
 func main() {
+	h := slog.NewJSONHandler(os.Stdout, nil)
+	slog.SetDefault(slog.New(h))
 	clientID, ok := os.LookupEnv("CLIENT_ID")
 	if !ok {
 		slog.Error("env CLIENT_ID not set")
@@ -191,6 +194,11 @@ func withToken(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+type problemResponse struct {
+	Title  string `json:"title"`
+	Status string `json:"status"`
+}
+
 func athlete(c echo.Context) error {
 	token, ok := c.Get("token").(*oauth2.Token)
 	if !ok || token == nil {
@@ -205,6 +213,9 @@ func athlete(c echo.Context) error {
 	athlete, err := client.Athletes.GetLoggedInAthlete(nil, nil)
 	if err != nil {
 		slog.Error("Could not get athlete", "error", err.Error())
+		if strings.Contains(err.Error(), "Rate Limit Exceeded") {
+			return c.JSON(http.StatusTooManyRequests, problemResponse{Title: "Rate Limit Exceeded", Status: fmt.Sprintf("%d", http.StatusTooManyRequests)})
+		}
 		return err
 	}
 	return c.JSON(http.StatusOK, athlete.Payload)
@@ -272,7 +283,9 @@ func detailedActivity(client *apiclient.StravaAPIV3, query string, activityType 
 	activity2, err := client.Activities.GetActivityByID(params.WithID(int64(activity.ID)), nil)
 	if err != nil {
 		slog.Error("Could not get detailed activity", "id", activity.ID, "error", err.Error())
+		return
 	}
+
 	if query == "" || Matches(activity.Name, query) || Matches(activity2.Payload.Description, query) {
 		activityChan <- activity2.Payload
 	} else {

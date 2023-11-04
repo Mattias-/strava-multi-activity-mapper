@@ -3,7 +3,7 @@ COPY . /src
 WORKDIR /src
 RUN yarn && yarn build
 
-FROM golang:1.17 AS backend
+FROM golang:1.21 AS backend
 COPY . /src
 WORKDIR /src
 
