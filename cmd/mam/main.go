@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -26,8 +27,6 @@ import (
 )
 
 var (
-	commit  = "none"
-	date    = "unknown"
 	baseUrl string
 	port    string
 	conf    *oauth2.Config
@@ -98,11 +97,29 @@ func main() {
 }
 
 func version(c echo.Context) error {
+	commit := "none"
+	date := "unknown"
+	dirty := ""
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, kv := range info.Settings {
+			if kv.Key == "vcs.revision" {
+				commit = kv.Value
+			}
+			if kv.Key == "vcs.time" {
+				date = kv.Value
+			}
+			if kv.Key == "vcs.modified" {
+				if kv.Value == "true" {
+					dirty = "-dirty"
+				}
+			}
+		}
+	}
 	r := struct {
 		Commit string `json:"commit"`
 		Date   string `json:"date"`
 	}{
-		Commit: commit,
+		Commit: commit + dirty,
 		Date:   date,
 	}
 	return c.JSON(http.StatusOK, r)
