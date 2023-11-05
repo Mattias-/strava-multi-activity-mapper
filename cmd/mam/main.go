@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"runtime/debug"
@@ -22,7 +23,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	geojson "github.com/paulmach/go.geojson"
-	"golang.org/x/exp/slog"
 	"golang.org/x/oauth2"
 )
 
