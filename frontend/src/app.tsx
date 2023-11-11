@@ -1,4 +1,4 @@
-import AthleteComponent from "./Athlete.tsx";
+import AthleteCard from "./AthleteCard";
 import ActivitySearch from "./ActivitySearch.tsx";
 import Map from "./Map.tsx";
 import ActivityList from "./ActivityList.tsx";
@@ -14,7 +14,7 @@ export function App() {
         class="flex flex-col p-4 max-w-md h-screen overflow-y-scroll absolute left-0 top-0"
         style="z-index:1000;"
       >
-        <AthleteComponent />
+        <AthleteCard />
         <ActivitySearch state={state} />
         <ActivityList state={state} />
       </div>

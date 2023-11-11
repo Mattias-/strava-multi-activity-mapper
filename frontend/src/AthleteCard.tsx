@@ -10,7 +10,7 @@ function athleteUrl(athlete: Athlete) {
   return `https://www.strava.com/athletes/${athlete?.id}` || "";
 }
 
-export default function AthleteComponent() {
+export default function AthleteCard() {
   const [isLoading, setIsLoading] = useState(true);
   const [athlete, setAthlete] = useState<Athlete | null>(null);
 
