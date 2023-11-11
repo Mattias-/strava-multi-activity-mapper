@@ -9,11 +9,11 @@ import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { AppState, Activity } from "./types.ts";
 
-type MapProps = {
+type MapComponentProps = {
   state: AppState;
 };
 
-export default function Map({ state }: MapProps) {
+export default function MapComponent({ state }: MapComponentProps) {
   const center: LatLngExpression = [59.32, 18.07];
   const accessToken =
     "pk.eyJ1IjoibWF0dGk0cyIsImEiOiJja2E0Nmc3ZXgwYjE3M2ZtdmtpemR5ZHNvIn0.Zd4e3EFiWxz8tFV9MYREbg";
