@@ -25,6 +25,9 @@ export default function Map({ state }: MapProps) {
   ].join("");
 
   const features = state.activities.value.map((a: Activity) => {
+    if (a.feature == undefined) {
+      return;
+    }
     return (
       <GeoJSON data={a.feature}>
         <Popup>

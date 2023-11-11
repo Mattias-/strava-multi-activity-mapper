@@ -27,7 +27,7 @@ export interface ApiActivities {
 }
 
 export interface Activity {
-  feature: Feature;
+  feature?: Feature;
   id: string;
   start_date: Date;
   text: string[];

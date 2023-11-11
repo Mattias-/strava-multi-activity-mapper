@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from "preact/hooks";
 import { AppState, Activity, Feature } from "./types.ts";
 import { db } from "./db.ts";
-import { getActivityTypes, ATs, getActivities } from "./api.ts";
+import { getActivityTypes, ATs, getActivities, getActivity } from "./api.ts";
+import Papa from "papaparse";
 
 type ActivitySearchProps = {
   state: AppState;
@@ -10,8 +11,10 @@ type ActivitySearchProps = {
 export default function ActivitySearch(props: ActivitySearchProps) {
   const data = {
     queryString: "",
-    fromDate: "",
-    toDate: "",
+    fromDate: new Date(Date.now() - 7 * 24 * 3600 * 1000)
+      .toISOString()
+      .slice(0, 10),
+    toDate: new Date().toISOString().slice(0, 10),
     type: "",
   };
   var onlyCached = false;
@@ -36,27 +39,27 @@ export default function ActivitySearch(props: ActivitySearchProps) {
     props.state.activities.value = [];
   }
 
-  function addActivityToDb(feature: Feature) {
+  function featureToActivity(feature: Feature): Activity {
     const a = feature.properties.activity;
     const nameA = a.name?.split(" ");
     const descA = a.description?.split(" ") || [];
     const text = [...nameA, ...descA];
-    const ac: Activity = {
+    return {
       id: a.id,
       type: a.type,
       start_date: new Date(a.start_date),
       text,
       feature,
     };
-    db.activities.put(ac);
   }
 
   async function getActs() {
     if (!onlyCached) {
       const p = await getActivities(data);
-      if (p !== undefined) {
-        p.features.forEach(addActivityToDb);
-      }
+      const as = p.features.map(featureToActivity);
+      as.forEach((ac) => {
+        db.activities.put(ac);
+      });
     }
 
     var activities = db.activities.toCollection();
@@ -67,32 +70,84 @@ export default function ActivitySearch(props: ActivitySearchProps) {
         .distinct();
     }
 
+    var lower = new Date(data.fromDate);
+    lower.setHours(0, 0, 0);
+    var upper = new Date(data.toDate);
+    upper.setHours(23, 59, 59);
+
     activities
-      .and((value) => {
-        var lower = new Date(data.fromDate);
-        lower.setHours(0, 0, 0);
-        var upper = new Date(data.toDate);
-        upper.setHours(23, 59, 59);
+      .and((value: Activity) => {
         return value.start_date >= lower && value.start_date <= upper;
       })
-      .each(function (data: Activity) {
-        console.log("DB Found:", data);
-        const feature = data.feature;
-        const a = feature.properties.activity;
-        const ac: Activity = {
-          id: a.id,
-          type: a.type,
-          start_date: new Date(a.start_date),
-          text: [],
-          feature,
-        };
-        props.state.activities.value = [...props.state.activities.value, ac];
+      .modify((data: Activity) => {
+        if (data.feature === undefined) {
+          console.log("Found in DB with NO feature:", data);
+          getActivity(data.id)
+            .then((a) => {
+              console.log("Got activity from API", a);
+              data.feature = a.features[0];
+              data.start_date = new Date(
+                a.features[0].properties.activity.start_date,
+              );
+            })
+            .catch((e) => {
+              console.error("Error when getting single activity", e);
+            });
+        } else {
+          console.log("Found in DB with feature:", data);
+        }
+        props.state.activities.value = [...props.state.activities.value, data];
       });
+  }
+
+  function onSubmit(e: Event) {
+    e.preventDefault();
+    getActs();
+  }
+
+  async function uploadCSV() {
+    (window as any)
+      .showOpenFilePicker()
+      .then((fhs: any) => fhs[0].getFile())
+      .then((file: File) =>
+        Papa.parse(file, {
+          skipEmptyLines: true,
+          header: true,
+          transformHeader: (header) => {
+            // Some headers contain a span element, just get the content of these.
+            if (header.startsWith("<span")) {
+              return header.split(">")[1].split("<")[0];
+            }
+            return header;
+          },
+          step: (res: any) => {
+            const id = res.data["Activity ID"];
+            const type = res.data["Activity Type"];
+            const start_date = new Date(res.data["Activity Date"]);
+            const name = res.data["Activity Name"];
+            const description = res.data["Activity Description"];
+            const nameA = name?.split(" ");
+            const descA = description?.split(" ") || [];
+            const text = [...nameA, ...descA];
+            const ac: Activity = {
+              id: id,
+              type: type,
+              start_date: start_date,
+              text,
+            };
+            db.activities.put(ac);
+          },
+          complete: (results) => console.log("CSV parsing complete:", results),
+        }),
+      );
   }
 
   return (
     <div>
-      <form class="flex flex-col bg-gray shadow-md rounded px-8 pt-4 pb-4 mb-4 max-w-xs bg-gray-100">
+      <form
+        onSubmit={onSubmit}
+        class="flex flex-col bg-gray shadow-md rounded px-8 pt-4 pb-4 mb-4 max-w-xs bg-gray-100"
+      >
         <div class="mb-4">
           <label class="block text-gray-700 text-sm font-bold mb-2" for="text">
             Search
@@ -191,8 +246,7 @@ export default function ActivitySearch(props: ActivitySearchProps) {
         <div class="mb-4">
           <button
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            type="button"
-            onClick={() => getActs()}
+            type="submit"
           >
             Get Activities
           </button>
@@ -203,15 +257,16 @@ export default function ActivitySearch(props: ActivitySearchProps) {
             type="button"
             onClick={() => clearActivities()}
           >
-            Clear Shown
+            Clear
           </button>
         </div>
         <div class="mb-4">
           <button
             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             type="button"
+            onClick={() => uploadCSV()}
           >
-            Clear Cache
+            Upload exported activities CSV
           </button>
         </div>
       </form>

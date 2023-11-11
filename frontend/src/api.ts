@@ -44,6 +44,19 @@ export async function getActivities(
   }
 }
 
+export async function getActivity(id: string): Promise<ApiActivities> {
+  const response = await fetch(`${apiBaseUrl}/activities/${id}`, {
+    credentials: "include",
+  });
+  if (response.status === 200) {
+    return await response.json();
+  } else {
+    throw new Error(
+      `API request failed with status: ${response.status} - ${response.statusText}`,
+    );
+  }
+}
+
 export type ATs = {
   [key: string]: string;
 };
