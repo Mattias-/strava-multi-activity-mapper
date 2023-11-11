@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime/debug"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -91,6 +92,7 @@ func main() {
 	e.GET("/callback", callback)
 	e.GET("/athlete", athlete, withToken)
 	e.GET("/activities", activities, withToken)
+	e.GET("/activities/:id", activity, withToken)
 	e.GET("/activitytypes", activityTypes)
 
 	e.Logger.Fatal(e.Start(":" + port))
@@ -389,6 +391,31 @@ func activities(c echo.Context) error {
 		fc.AddFeature(f)
 	}
 
+	return c.JSON(http.StatusOK, fc)
+}
+
+func activity(c echo.Context) error {
+	token := c.Get("token").(*oauth2.Token)
+	r := httptransport.New(apiclient.DefaultHost, apiclient.DefaultBasePath, apiclient.DefaultSchemes)
+	r.DefaultAuthentication = httptransport.BearerToken(token.AccessToken)
+	client := apiclient.New(r, strfmt.Default)
+
+	id := c.Param("id")
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return err
+	}
+	params := activitiesapi.NewGetActivityByIDParams()
+	activity2, err := client.Activities.GetActivityByID(params.WithID(idInt), nil)
+	if err != nil {
+		if strings.Contains(err.Error(), "Rate Limit Exceeded") {
+			return c.JSON(http.StatusTooManyRequests, problemResponse{Title: "Rate Limit Exceeded", Status: fmt.Sprintf("%d", http.StatusTooManyRequests)})
+		}
+	}
+
+	fc := geojson.NewFeatureCollection()
+	f := activityToGeoJSON(activity2.Payload)
+	fc.AddFeature(f)
 	return c.JSON(http.StatusOK, fc)
 }
 
