@@ -1,0 +1,21 @@
+name: Container
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t mam .
+      - run: docker run --rm -eCLIENT_ID=1 -eCLIENT_SECRET=1 -eCOOKIE_SECRET=1 -p8000:8000 mam:latest &
+      - name: Test endpoints
+        shell: bash
+        run: |
+          set -e
+          curl --silent --show-error --fail-with-body --retry-connrefused --retry 2 "http://127.0.0.1:8000"
+          curl --silent --show-error --fail-with-body --retry-connrefused --retry 2 "http://127.0.0.1:8000/version"
