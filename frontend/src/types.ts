@@ -16,7 +16,7 @@ export type ActivityRes = {
 };
 
 export type Feature = {
-  type: string;
+  type: "FeatureCollection";
   properties: {
     activity: ActivityRes;
   };
