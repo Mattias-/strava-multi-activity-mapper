@@ -1,13 +1,13 @@
-import {
-  MapContainer,
-  TileLayer,
-  GeoJSON,
-  Popup,
-  ZoomControl,
-} from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { AppState, Activity } from "./types.ts";
+import {
+  GeoJSON,
+  MapContainer,
+  Popup,
+  TileLayer,
+  ZoomControl,
+} from "react-leaflet";
+import { Activity, AppState } from "./types.ts";
 
 type MapComponentProps = {
   state: AppState;
@@ -25,7 +25,7 @@ export default function MapComponent({ state }: MapComponentProps) {
   ].join("");
 
   const features = state.activities.value.map((a: Activity) => {
-    if (a.feature == undefined) {
+    if (a.feature === undefined) {
       return;
     }
     return (

@@ -1,6 +1,8 @@
-import "preact/debug";
 import { render } from "preact";
+import "preact/debug";
 import { App } from "./app.tsx";
 import "./index.css";
-
-render(<App />, document.getElementById("app")!);
+const root = document.getElementById("app");
+if (root != null) {
+  render(<App />, root);
+}

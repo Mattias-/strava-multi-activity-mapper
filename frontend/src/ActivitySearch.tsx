@@ -1,8 +1,8 @@
-import { useEffect, useState, useMemo } from "preact/hooks";
-import { AppState, Activity, Feature } from "./types.ts";
-import { db } from "./db.ts";
-import { getActivityTypes, ATs, getActivities, getActivity } from "./api.ts";
 import Papa from "papaparse";
+import { useEffect, useMemo, useState } from "preact/hooks";
+import { ATs, getActivities, getActivity, getActivityTypes } from "./api.ts";
+import { db } from "./db.ts";
+import { Activity, AppState, Feature } from "./types.ts";
 
 type ActivitySearchProps = {
   state: AppState;
@@ -17,7 +17,7 @@ export default function ActivitySearch(props: ActivitySearchProps) {
     toDate: new Date().toISOString().slice(0, 10),
     type: "",
   };
-  var onlyCached = false;
+  let onlyCached = false;
 
   const [activityTypes, setActivityTypes] = useState<ATs>({});
   useEffect(() => {
@@ -57,12 +57,12 @@ export default function ActivitySearch(props: ActivitySearchProps) {
     if (!onlyCached) {
       const p = await getActivities(data);
       const as = p.features.map(featureToActivity);
-      as.forEach((ac) => {
+      for (const ac of as) {
         db.activities.put(ac);
-      });
+      }
     }
 
-    var activities = db.activities.toCollection();
+    let activities = db.activities.toCollection();
     if (data.queryString) {
       activities = db.activities
         .where("text")
@@ -70,9 +70,9 @@ export default function ActivitySearch(props: ActivitySearchProps) {
         .distinct();
     }
 
-    var lower = new Date(data.fromDate);
+    const lower = new Date(data.fromDate);
     lower.setHours(0, 0, 0);
-    var upper = new Date(data.toDate);
+    const upper = new Date(data.toDate);
     upper.setHours(23, 59, 59);
 
     activities
@@ -105,12 +105,16 @@ export default function ActivitySearch(props: ActivitySearchProps) {
     getActs();
   }
 
+  interface MyWindow {
+    showOpenFilePicker(): Promise<FileSystemFileHandle[]>;
+  }
+
   async function uploadCSV() {
-    (window as any)
+    (window as unknown as MyWindow)
       .showOpenFilePicker()
-      .then((fhs: any) => fhs[0].getFile())
-      .then((file: File) =>
-        Papa.parse(file, {
+      .then((fhs) => fhs[0].getFile())
+      .then((file) =>
+        Papa.parse<Record<string, string>>(file, {
           skipEmptyLines: true,
           header: true,
           transformHeader: (header) => {
@@ -120,7 +124,7 @@ export default function ActivitySearch(props: ActivitySearchProps) {
             }
             return header;
           },
-          step: (res: any) => {
+          step: (res) => {
             const id = res.data["Activity ID"];
             const type = res.data["Activity Type"];
             const start_date = new Date(res.data["Activity Date"]);
@@ -137,7 +141,6 @@ export default function ActivitySearch(props: ActivitySearchProps) {
             };
             db.activities.put(ac);
           },
-          complete: (results) => console.log("CSV parsing complete:", results),
         }),
       );
   }

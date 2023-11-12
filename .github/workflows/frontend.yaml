@@ -16,5 +16,5 @@ jobs:
         with:
           node-version: 18
       - run: npm ci
-      - run: npm test
       - run: npx @biomejs/biome ci .
+      - run: npm run build

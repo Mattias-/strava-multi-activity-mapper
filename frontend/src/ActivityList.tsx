@@ -10,13 +10,15 @@ export default function ActivityList(props: ActivityListProps) {
       <td>{a.type}</td>
       <td>{a.start_date.toISOString().slice(0, 10)}</td>
       <td>
-        <a href={a.feature.properties.activity.id}>
-          {a.feature.properties.activity.name}
-        </a>
+        {a.feature && (
+          <a href={a.feature.properties.activity.id}>
+            {a.feature.properties.activity.name}
+          </a>
+        )}
       </td>
     </tr>
   ));
-  if (activities === undefined || activities.length == 0) {
+  if (activities === undefined || activities.length === 0) {
     return <></>;
   }
   return (
