@@ -1,0 +1,14 @@
+name: Container
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t mam .
+      - run: docker run --rm -eCLIENT_ID=1 -eCLIENT_SECRET=1 -eCOOKIE_SECRET=1 -p8000:8000 mam:latest &
+      - run: sleep 3 && curl 127.0.0.1:8000 && curl 127.0.0.1:8000/version
