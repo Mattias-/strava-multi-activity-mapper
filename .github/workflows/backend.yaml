@@ -5,16 +5,16 @@ on:
     branches:
       - main
     paths:
-      - "./cmd/**"
-      - "./go.mod"
-      - "./go.sum"
-      - "./.github/workflows/backend.yaml"
+      - "cmd/**"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/backend.yaml"
   pull_request:
     paths:
-      - "./cmd/**"
-      - "./go.mod"
-      - "./go.sum"
-      - "./.github/workflows/backend.yaml"
+      - "cmd/**"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/backend.yaml"
 
 jobs:
   check:
