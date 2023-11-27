@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@preact/signals": "^1.2.1",
-    "@types/papaparse": "^5.3.11",
+    "@types/papaparse": "^5.3.13",
     "dexie": "^3.2.4",
     "dexie-react-hooks": "^1.1.7",
     "leaflet": "^1.9.4",
