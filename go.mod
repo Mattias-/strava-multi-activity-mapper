@@ -6,7 +6,7 @@ require (
 	github.com/Mattias-/strava-go v0.0.11
 	github.com/go-openapi/runtime v0.26.2
 	github.com/go-openapi/strfmt v0.21.9
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/gorilla/sessions v1.2.2
 	github.com/labstack/echo-contrib v0.15.0
 	github.com/labstack/echo/v4 v4.11.3
