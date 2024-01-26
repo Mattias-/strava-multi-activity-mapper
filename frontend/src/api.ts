@@ -8,11 +8,10 @@ export async function getAthlete(): Promise<Athlete> {
   });
   if (response.status === 200) {
     return await response.json();
-  } else {
-    throw new Error(
-      `API request failed with status: ${response.status} - ${response.statusText}`,
-    );
   }
+  throw new Error(
+    `API request failed with status: ${response.status} - ${response.statusText}`,
+  );
 }
 
 export interface GetActivitiesProps {
@@ -37,11 +36,10 @@ export async function getActivities(
   });
   if (response.status === 200) {
     return await response.json();
-  } else {
-    throw new Error(
-      `API request failed with status: ${response.status} - ${response.statusText}`,
-    );
   }
+  throw new Error(
+    `API request failed with status: ${response.status} - ${response.statusText}`,
+  );
 }
 
 export async function getActivity(id: string): Promise<ApiActivities> {
@@ -50,11 +48,10 @@ export async function getActivity(id: string): Promise<ApiActivities> {
   });
   if (response.status === 200) {
     return await response.json();
-  } else {
-    throw new Error(
-      `API request failed with status: ${response.status} - ${response.statusText}`,
-    );
   }
+  throw new Error(
+    `API request failed with status: ${response.status} - ${response.statusText}`,
+  );
 }
 
 export type ATs = {
@@ -65,9 +62,8 @@ export async function getActivityTypes(): Promise<ATs> {
   const response = await fetch(`${apiBaseUrl}/activitytypes`);
   if (response.status === 200) {
     return await response.json();
-  } else {
-    throw new Error(
-      `API request failed with status: ${response.status} - ${response.statusText}`,
-    );
   }
+  throw new Error(
+    `API request failed with status: ${response.status} - ${response.statusText}`,
+  );
 }
