@@ -1,4 +1,4 @@
-import { LatLngExpression } from "leaflet";
+import type { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   GeoJSON,
@@ -7,7 +7,7 @@ import {
   TileLayer,
   ZoomControl,
 } from "react-leaflet";
-import { Activity, AppState } from "./types.ts";
+import type { Activity, AppState } from "./types.ts";
 
 type MapComponentProps = {
   state: AppState;

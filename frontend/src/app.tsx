@@ -3,7 +3,7 @@ import ActivityList from "./ActivityList.tsx";
 import ActivitySearch from "./ActivitySearch.tsx";
 import AthleteCard from "./AthleteCard";
 import MapComponent from "./MapComponent";
-import { Activity, AppState } from "./types.ts";
+import type { Activity, AppState } from "./types.ts";
 
 export function App() {
   const state: AppState = { activities: signal<Activity[]>([]) };

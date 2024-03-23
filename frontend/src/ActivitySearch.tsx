@@ -1,8 +1,13 @@
 import Papa from "papaparse";
 import { useEffect, useMemo, useState } from "preact/hooks";
-import { ATs, getActivities, getActivity, getActivityTypes } from "./api.ts";
+import {
+  type ATs,
+  getActivities,
+  getActivity,
+  getActivityTypes,
+} from "./api.ts";
 import { db } from "./db.ts";
-import { Activity, AppState, Feature } from "./types.ts";
+import type { Activity, AppState, Feature } from "./types.ts";
 
 type ActivitySearchProps = {
   state: AppState;

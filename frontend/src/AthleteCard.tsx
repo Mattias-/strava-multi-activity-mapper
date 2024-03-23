@@ -1,6 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import { getAthlete } from "./api.ts";
-import { Athlete } from "./types.ts";
+import type { Athlete } from "./types.ts";
 
 function fullName(athlete: Athlete) {
   return `${athlete?.firstname} ${athlete?.lastname}` || "";

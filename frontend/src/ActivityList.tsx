@@ -1,4 +1,4 @@
-import { AppState } from "./types.ts";
+import type { AppState } from "./types.ts";
 
 type ActivityListProps = {
   state: AppState;

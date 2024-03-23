@@ -1,4 +1,4 @@
-import { ApiActivities, Athlete } from "./types.ts";
+import type { ApiActivities, Athlete } from "./types.ts";
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 

@@ -1,5 +1,5 @@
-import Dexie, { Table } from "dexie";
-import { Activity } from "./types.ts";
+import Dexie, { type Table } from "dexie";
+import type { Activity } from "./types.ts";
 
 export class MamDB extends Dexie {
   activities!: Table<Activity, string>;
