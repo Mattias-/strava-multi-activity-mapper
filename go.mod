@@ -12,7 +12,7 @@ require (
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/paulmach/go.geojson v1.5.0
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/oauth2 v0.18.0
+	golang.org/x/oauth2 v0.19.0
 )
 
 require (
@@ -29,7 +29,6 @@ require (
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -53,7 +52,5 @@ require (
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
