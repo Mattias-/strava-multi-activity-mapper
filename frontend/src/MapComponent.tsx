@@ -29,7 +29,7 @@ export default function MapComponent({ state }: MapComponentProps) {
       return;
     }
     return (
-      <GeoJSON data={a.feature}>
+      <GeoJSON key={a.id} data={a.feature}>
         <Popup>
           <a href={`https://strava.com/activities/${a.id}`}>
             {a.feature.properties.activity.name}

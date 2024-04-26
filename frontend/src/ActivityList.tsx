@@ -6,7 +6,7 @@ type ActivityListProps = {
 
 export default function ActivityList(props: ActivityListProps) {
   const activities = props.state.activities.value.map((a) => (
-    <tr>
+    <tr key={a.id}>
       <td>{a.type}</td>
       <td>{a.start_date.toISOString().slice(0, 10)}</td>
       <td>

@@ -36,7 +36,9 @@ export default function ActivitySearch(props: ActivitySearchProps) {
 
   const atOpts = useMemo(() => {
     return Object.entries(activityTypes).map(([k, v]) => (
-      <option value={k}>{v}</option>
+      <option key={k} value={k}>
+        {v}
+      </option>
     ));
   }, [activityTypes]);
 
