@@ -12,7 +12,7 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/paulmach/go.geojson v1.5.0
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/oauth2 v0.19.0
+	golang.org/x/oauth2 v0.20.0
 )
 
 require (
