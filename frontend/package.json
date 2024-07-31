@@ -16,7 +16,7 @@
     "dexie-react-hooks": "^1.1.7",
     "leaflet": "^1.9.4",
     "papaparse": "^5.4.1",
-    "preact": "^10.22.0",
+    "preact": "^10.23.1",
     "react-leaflet": "^4.2.1"
   },
   "devDependencies": {
