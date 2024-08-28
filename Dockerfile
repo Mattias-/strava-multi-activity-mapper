@@ -3,7 +3,7 @@ COPY frontend /src/frontend
 WORKDIR /src/frontend
 RUN npm ci && npm run build
 
-FROM golang:1.21 AS backend
+FROM golang:1.23 AS backend
 COPY . /src
 WORKDIR /src
 RUN CGO_ENABLED=0 go build -ldflags "-s -w" ./cmd/mam/
