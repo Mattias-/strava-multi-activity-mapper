@@ -1,11 +1,8 @@
 module github.com/Mattias-/strava-multi-activity-mapper
 
 go 1.23
-
-toolchain go1.23.0
-
 require (
-	github.com/Mattias-/strava-go v0.0.12
+	github.com/Mattias-/strava-go v0.1.0
 	github.com/go-openapi/runtime v0.28.0
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/google/uuid v1.6.0

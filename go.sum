@@ -1,5 +1,5 @@
-github.com/Mattias-/strava-go v0.0.12 h1:ymaAp4UOPivmmrRq3zDg+Kt/DsJccfbj81Tq+NuhYRU=
-github.com/Mattias-/strava-go v0.0.12/go.mod h1:/uQVpSeGkP+bF0pN75FZbet4iRMzVyDavQbbPytGaZ0=
+github.com/Mattias-/strava-go v0.1.0 h1:qRsIWcWbWjcL1qTvIWqu6JtoB4u/rTo5jfZHg6t2pnE=
+github.com/Mattias-/strava-go v0.1.0/go.mod h1:dyhyEPIXe741P5kzGoBMAoLW5m2NksbqwOasylhe5hI=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
